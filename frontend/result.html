@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Air Quality Report — AirSense</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <nav class="navbar">
+      <a href="index.html" class="brand">
+        <span class="brand-mark">AQ</span>
+        <span class="brand-name">AirSense</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="analysis.html">New analysis</a></li>
+      </ul>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+    </nav>
+  </header>
+
+  <main class="dashboard" id="dashboard">
+
+    <section class="result-hero">
+      <div class="aqi-card" id="aqiCard">
+        <span class="aqi-card-label">Predicted AQI</span>
+        <span class="aqi-card-value" id="aqiValue">--</span>
+        <span class="aqi-card-badge" id="aqiCategory">Loading…</span>
+      </div>
+      <p class="aqi-description" id="aqiDescription"></p>
+    </section>
+
+    <section class="dashboard-grid">
+      <div class="panel">
+        <h2>Pollutant &amp; Weather Summary</h2>
+        <table class="summary-table" id="summaryTable">
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h2>Pollutant Levels</h2>
+        <div id="barChartWrap" class="chart-wrap"><canvas id="barChart"></canvas></div>
+      </div>
+
+      <div class="panel">
+        <h2>Health Effects</h2>
+        <ul class="effects-list" id="healthEffects"></ul>
+      </div>
+
+      <div class="panel">
+        <h2>Recommendations</h2>
+        <ul class="reco-list" id="recommendations"></ul>
+      </div>
+
+      <div class="panel">
+        <h2>Pollutant Comparison</h2>
+        <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+      </div>
+
+      <div class="panel">
+        <h2>AQI Category Reference</h2>
+        <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+      </div>
+    </section>
+
+    <section class="report-actions">
+      <button class="btn btn-primary" id="printBtn">Print / Save as PDF</button>
+      <a href="analysis.html" class="btn btn-ghost">Run another analysis</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>AirSense — Air Quality Analysis &amp; Disease Prediction Using Machine Learning with R. Academic project.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="js/main.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/report.js"></script>
+</body>
+</html>

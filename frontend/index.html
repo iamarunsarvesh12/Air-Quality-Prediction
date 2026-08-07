@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AirSense — Air Quality Analysis &amp; Disease Prediction</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <nav class="navbar">
+      <a href="index.html" class="brand">
+        <span class="brand-mark">AQ</span>
+        <span class="brand-name">AirSense</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#about">About</a></li>
+        <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#awareness">Air &amp; Health</a></li>
+        <li><a href="analysis.html" class="nav-cta">Analyze Air Quality</a></li>
+      </ul>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-content">
+        <p class="eyebrow">Machine Learning · R Backend</p>
+        <h1>Know the air you breathe, <span>before it affects you.</span></h1>
+        <p class="hero-sub">
+          AirSense predicts the Air Quality Index from live pollutant readings using a
+          Random Forest model trained in R, then maps the result to real health risks
+          and recommendations — instantly.
+        </p>
+        <div class="hero-actions">
+          <a href="analysis.html" class="btn btn-primary">Analyze Air Quality →</a>
+          <a href="#how-it-works" class="btn btn-ghost">See how it works</a>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="aqi-dial">
+          <span class="aqi-dial-value">--</span>
+          <span class="aqi-dial-label">Live AQI preview</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="about" class="section">
+      <h2>What is AirSense?</h2>
+      <p>
+        Air pollution is linked to respiratory, cardiovascular, and long-term health
+        problems worldwide. AirSense lets you enter local pollutant readings —
+        PM2.5, PM10, NO₂, SO₂, CO, O₃, along with temperature, humidity and wind speed —
+        and returns a predicted Air Quality Index, its category, and the health effects
+        associated with that level.
+      </p>
+    </section>
+
+    <section id="how-it-works" class="section">
+      <h2>How it works</h2>
+      <ol class="steps">
+        <li><span class="step-num">01</span> Enter pollutant &amp; weather values</li>
+        <li><span class="step-num">02</span> Data is validated in the browser</li>
+        <li><span class="step-num">03</span> Sent to the R Plumber API</li>
+        <li><span class="step-num">04</span> Random Forest model predicts AQI</li>
+        <li><span class="step-num">05</span> AQI mapped to category &amp; health effects</li>
+        <li><span class="step-num">06</span> Results shown with charts &amp; recommendations</li>
+      </ol>
+    </section>
+
+    <section id="awareness" class="section awareness">
+      <h2>Why air quality matters</h2>
+      <div class="cards">
+        <div class="card">
+          <h3>Good (0–50)</h3>
+          <p>Air quality is satisfactory; little or no risk.</p>
+        </div>
+        <div class="card">
+          <h3>Moderate (51–100)</h3>
+          <p>Acceptable, but may affect very sensitive individuals.</p>
+        </div>
+        <div class="card">
+          <h3>Unhealthy (101–200)</h3>
+          <p>Sensitive groups may experience health effects.</p>
+        </div>
+        <div class="card">
+          <h3>Hazardous (300+)</h3>
+          <p>Serious risk of health effects for everyone.</p>
+        </div>
+      </div>
+      <a href="analysis.html" class="btn btn-primary center">Check today's air quality</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>AirSense — Air Quality Analysis &amp; Disease Prediction Using Machine Learning with R. Academic project.</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,197 @@
+/* ===========================================================
+   AirSense — Dashboard Styles (Module 8: Results Dashboard)
+   =========================================================== */
+
+.dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 24px 100px;
+}
+
+.result-hero {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.aqi-card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius);
+  padding: 32px 64px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--shadow), 0 0 30px rgba(255,255,255,0.02);
+}
+
+.aqi-card-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+}
+
+.aqi-card-value {
+  font-family: var(--font-display);
+  font-size: 4.5rem;
+  font-weight: 700;
+  color: white;
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(255,255,255,0.1);
+}
+
+.aqi-card-badge {
+  padding: 8px 22px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: white;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+  text-transform: uppercase;
+}
+
+.aqi-description {
+  max-width: 65ch;
+  margin: 20px auto 0;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius);
+  padding: 28px 30px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: var(--shadow);
+}
+.panel:hover {
+  border-color: var(--border-glass-hover);
+  box-shadow: 0 16px 36px rgba(0,0,0,0.5);
+}
+
+.panel h2 {
+  font-size: 1.15rem;
+  color: white;
+  margin-bottom: 20px;
+  border-left: 4px solid var(--sky-light);
+  padding-left: 12px;
+  line-height: 1.2;
+}
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.summary-table td {
+  padding: 12px 6px;
+  border-bottom: 1px solid var(--border-glass);
+  color: var(--text-secondary);
+}
+
+.summary-table tr:last-child td {
+  border-bottom: none;
+}
+
+.summary-table td:last-child {
+  text-align: right;
+  font-weight: 700;
+  color: white;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 260px;
+}
+
+/* Customized list style for a premium touch */
+.effects-list, .reco-list {
+  margin: 0; 
+  padding-left: 0;
+  list-style: none;
+  font-size: 0.96rem;
+  line-height: 1.8;
+}
+
+.effects-list li, .reco-list li {
+  position: relative;
+  padding-left: 28px;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+}
+
+.effects-list li::before {
+  content: "⚠️";
+  position: absolute;
+  left: 0;
+  top: 1px;
+  font-size: 0.95rem;
+}
+
+.reco-list li::before {
+  content: "🛡️";
+  position: absolute;
+  left: 0;
+  top: 1px;
+  font-size: 0.95rem;
+}
+
+.report-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 48px;
+}
+
+@media (max-width: 860px) {
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .aqi-card { padding: 28px 48px; }
+}
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .site-header, .site-footer, .report-actions, .nav-toggle { 
+    display: none !important; 
+  }
+  .dashboard { 
+    padding: 0; 
+  }
+  .panel {
+    background: transparent !important;
+    border: 1px solid #ccc !important;
+    color: black !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+  .panel h2 {
+    color: black !important;
+    border-left-color: #333 !important;
+  }
+  .summary-table td {
+    color: black !important;
+    border-bottom-color: #ccc !important;
+  }
+  .summary-table td:last-child {
+    color: black !important;
+  }
+  .effects-list li, .reco-list li {
+    color: black !important;
+  }
+}

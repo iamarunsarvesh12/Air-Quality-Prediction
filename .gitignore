@@ -1,0 +1,12 @@
+# R packages and libraries
+r_libs/
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+
+# Environment and log files
+*.log
+.DS_Store
+Thumbs.db
+tmp/
