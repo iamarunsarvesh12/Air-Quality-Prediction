@@ -1,116 +1,169 @@
 // ===========================================================
-// AirSense — charts.js (Module 9: Data Visualization)
-// Renders Bar, Radar, and Pie charts using Chart.js
-// Configured to look stunning on dark theme.
+// AeroSense TN — charts.js (Data Visualizations)
+// Interactive 24-Hour Forecast & Pollutant Comparison Charts
 // ===========================================================
 
-window.renderAirSenseCharts = function (input, result) {
+let trendChartInstance = null;
+let pollutantChartInstance = null;
+let districtChartInstance = null;
 
-  const pollutantLabels = ['PM2.5', 'PM10', 'NO₂', 'SO₂', 'CO', 'O₃'];
-  const pollutantValues = [
-    input.pm25, input.pm10, input.no2, input.so2, input.co, input.o3,
-  ];
+const ChartService = {
+  // 1. Render 24-Hour Forecast Trend Line
+  renderTrendChart(canvasId, forecastData, currentAqi) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || typeof Chart === 'undefined') return;
 
-  const palette = ['#3182CE', '#4299E1', '#63B3ED', '#F6E05E', '#ED8936', '#E53E3E'];
+    const ctx = canvas.getContext('2d');
+    if (trendChartInstance) trendChartInstance.destroy();
 
-  // ---- Bar Chart: Pollutant Levels ----
-  const barCtx = document.getElementById('barChart');
-  if (barCtx) {
-    new Chart(barCtx, {
-      type: 'bar',
+    const labels = ['Current', ...forecastData.map(d => d.time_label)];
+    const dataPoints = [currentAqi, ...forecastData.map(d => d.predicted_aqi)];
+
+    trendChartInstance = new Chart(ctx, {
+      type: 'line',
       data: {
-        labels: pollutantLabels,
+        labels: labels,
         datasets: [{
-          label: 'Pollutant level',
-          data: pollutantValues,
-          backgroundColor: palette,
-          borderRadius: 6,
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: {
-            grid: { color: 'rgba(255, 255, 255, 0.08)' },
-            ticks: { color: '#A0AEC0', font: { family: 'Inter', size: 11 } }
-          },
-          y: {
-            beginAtZero: true,
-            grid: { color: 'rgba(255, 255, 255, 0.08)' },
-            ticks: { color: '#A0AEC0', font: { family: 'Inter', size: 11 } }
-          }
-        },
-      },
-    });
-  }
-
-  // ---- Radar Chart: Pollutant Comparison ----
-  const radarCtx = document.getElementById('radarChart');
-  if (radarCtx) {
-    new Chart(radarCtx, {
-      type: 'radar',
-      data: {
-        labels: pollutantLabels,
-        datasets: [{
-          label: 'Current reading',
-          data: pollutantValues,
-          backgroundColor: 'rgba(66, 153, 225, 0.2)',
-          borderColor: '#4299E1',
-          pointBackgroundColor: '#4299E1',
-          pointBorderColor: '#fff',
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          r: {
-            grid: { color: 'rgba(255, 255, 255, 0.08)' },
-            angleLines: { color: 'rgba(255, 255, 255, 0.08)' },
-            pointLabels: { color: '#A0AEC0', font: { family: 'Inter', size: 11 } },
-            ticks: { color: '#A0AEC0', backdropColor: 'transparent', font: { size: 9 } }
-          }
-        },
-      },
-    });
-  }
-
-  // ---- Pie Chart: AQI Category Reference ----
-  const pieCtx = document.getElementById('pieChart');
-  if (pieCtx) {
-    new Chart(pieCtx, {
-      type: 'pie',
-      data: {
-        labels: ['Good', 'Moderate', 'Unhealthy (Sensitive)', 'Unhealthy', 'Very Unhealthy', 'Hazardous'],
-        datasets: [{
-          data: [50, 50, 50, 50, 100, 100], // range widths, illustrative reference
-          backgroundColor: ['#10B981', '#FBBF24', '#F59E0B', '#EF4444', '#8B5CF6', '#B91C1C'],
-          borderColor: '#1A202C',
-          borderWidth: 2,
-        }],
+          label: 'Predicted AQI Trajectory',
+          data: dataPoints,
+          borderColor: '#0284C7',
+          backgroundColor: 'rgba(2, 132, 199, 0.1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.35,
+          pointBackgroundColor: '#0284C7',
+          pointRadius: 4,
+          pointHoverRadius: 7
+        }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { 
-            position: 'bottom', 
-            labels: { 
-              boxWidth: 12, 
-              color: '#A0AEC0',
-              font: { size: 10, family: 'Inter' } 
-            } 
-          },
+          legend: { display: false },
           tooltip: {
-            callbacks: {
-              label: (ctx) => `Category ${ctx.label}: Active prediction is "${result.category}"`,
-            },
-          },
+            backgroundColor: '#0F172A',
+            titleFont: { family: 'Space Grotesk', size: 13 },
+            bodyFont: { family: 'Inter', size: 12 },
+            padding: 10,
+            cornerRadius: 8
+          }
         },
+        scales: {
+          y: {
+            beginAtZero: false,
+            grid: { color: '#E2E8F0' },
+            ticks: { font: { family: 'Inter' } }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: 'Inter', size: 11 } }
+          }
+        }
+      }
+    });
+  },
+
+  // 2. Render Pollutant Multi-Bar Comparison
+  renderPollutantChart(canvasId, pollutants) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const ctx = canvas.getContext('2d');
+    if (pollutantChartInstance) pollutantChartInstance.destroy();
+
+    const labels = ['PM2.5', 'PM10', 'NO₂', 'SO₂', 'CO (x10)', 'O₃', 'NH₃'];
+    const values = [
+      pollutants.pm25 || 0,
+      pollutants.pm10 || 0,
+      pollutants.no2 || 0,
+      pollutants.so2 || 0,
+      (pollutants.co || 0) * 10,
+      pollutants.o3 || 0,
+      pollutants.nh3 || 0
+    ];
+
+    pollutantChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Concentration (Standardized)',
+          data: values,
+          backgroundColor: [
+            '#EF4444',
+            '#F59E0B',
+            '#0284C7',
+            '#10B981',
+            '#6366F1',
+            '#8B5CF6',
+            '#14B8A6'
+          ],
+          borderRadius: 6
+        }]
       },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            grid: { color: '#E2E8F0' },
+            ticks: { font: { family: 'Inter' } }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: 'Inter', weight: 600 } }
+          }
+        }
+      }
+    });
+  },
+
+  // 3. Render Multi-District Comparison
+  renderDistrictComparisonChart(canvasId, hubs) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || typeof Chart === 'undefined' || !hubs || hubs.length === 0) return;
+
+    const ctx = canvas.getContext('2d');
+    if (districtChartInstance) districtChartInstance.destroy();
+
+    const labels = hubs.map(h => h.district_name.replace(/ \(.*\)/, ''));
+    const data = hubs.map(h => h.aqi);
+    const bgColors = hubs.map(h => h.color || '#0284C7');
+
+    districtChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Current Predicted AQI',
+          data: data,
+          backgroundColor: bgColors,
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: '#E2E8F0' }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: 'Inter', size: 10 } }
+          }
+        }
+      }
     });
   }
 };
+
+window.ChartService = ChartService;

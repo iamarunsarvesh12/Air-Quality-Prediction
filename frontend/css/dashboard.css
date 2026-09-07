@@ -1,5 +1,5 @@
 /* ===========================================================
-   AirSense — Dashboard Styles (Module 8: Results Dashboard)
+   AirSense — Dashboard Styles (Light Theme)
    =========================================================== */
 
 .dashboard {
@@ -10,48 +10,45 @@
 
 .result-hero {
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: 40px;
 }
 
 .aqi-card {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  background: var(--bg-secondary);
+  gap: 12px;
+  background: #FFFFFF;
   border: 1px solid var(--border-glass);
   border-radius: var(--radius);
-  padding: 32px 64px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: var(--shadow), 0 0 30px rgba(255,255,255,0.02);
+  padding: 36px 72px;
+  box-shadow: var(--shadow);
 }
 
 .aqi-card-label {
   font-size: 0.85rem;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .aqi-card-value {
   font-family: var(--font-display);
-  font-size: 4.5rem;
+  font-size: 5rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-primary);
   line-height: 1;
-  text-shadow: 0 0 20px rgba(255,255,255,0.1);
 }
 
 .aqi-card-badge {
-  padding: 8px 22px;
+  padding: 8px 24px;
   border-radius: 999px;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   color: white;
   letter-spacing: 0.02em;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
   text-transform: uppercase;
 }
 
@@ -62,6 +59,246 @@
   font-size: 1.1rem;
 }
 
+/* ===========================================================
+   Personalized Safety & Protection Hub Styles
+   =========================================================== */
+
+.safety-hub-panel {
+  background: #FFFFFF;
+  border: 1.5px solid rgba(2, 132, 199, 0.3);
+  border-radius: var(--radius);
+  padding: 36px 32px;
+  margin-bottom: 40px;
+  box-shadow: var(--shadow), 0 0 30px rgba(2, 132, 199, 0.06);
+}
+
+.safety-hub-header {
+  margin-bottom: 24px;
+}
+
+.safety-hub-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--sky), #2563EB);
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.safety-hub-header h2 {
+  font-size: 1.6rem;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.safety-hub-subtitle {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.persona-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border-glass);
+  padding-bottom: 16px;
+}
+
+.persona-tab {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-glass);
+  color: var(--text-secondary);
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.persona-tab:hover {
+  background: #E2E8F0;
+  color: var(--text-primary);
+  border-color: var(--border-glass-hover);
+}
+
+.persona-tab.active {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.12), rgba(99, 102, 241, 0.12));
+  border-color: var(--sky);
+  color: var(--sky-dark);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
+}
+
+.persona-advice-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: #F0F9FF;
+  border: 1px solid #BAE6FD;
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 28px;
+}
+
+.persona-advice-icon {
+  font-size: 1.8rem;
+}
+
+.persona-advice-content h3 {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.persona-advice-content p {
+  color: var(--text-secondary);
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.gear-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.gear-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease;
+}
+
+.gear-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--sky);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+.gear-icon {
+  font-size: 2rem;
+}
+
+.gear-info h4 {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.gear-info p {
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.gear-sub {
+  display: block;
+  font-size: 0.84rem;
+  color: var(--sky);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.checklist-box {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  padding: 24px;
+}
+
+.checklist-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.checklist-header h3 {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.checklist-progress-text {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--sky);
+}
+
+.checklist-bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: #E2E8F0;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.checklist-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--sky), #6366F1);
+  transition: width 0.3s ease;
+}
+
+.checklist-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.checklist-item {
+  background: #FFFFFF;
+  border: 1px solid var(--border-glass);
+  border-radius: 10px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+
+.checklist-item:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+}
+
+.checkbox-container input {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--sky);
+}
+
+/* ===========================================================
+   Dashboard Main Grid
+   =========================================================== */
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -69,24 +306,22 @@
 }
 
 .panel {
-  background: var(--bg-secondary);
+  background: #FFFFFF;
   border: 1px solid var(--border-glass);
   border-radius: var(--radius);
   padding: 28px 30px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   box-shadow: var(--shadow);
 }
 .panel:hover {
   border-color: var(--border-glass-hover);
-  box-shadow: 0 16px 36px rgba(0,0,0,0.5);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
 }
 
 .panel h2 {
   font-size: 1.15rem;
-  color: white;
+  color: var(--text-primary);
   margin-bottom: 20px;
-  border-left: 4px solid var(--sky-light);
+  border-left: 4px solid var(--sky);
   padding-left: 12px;
   line-height: 1.2;
 }
@@ -110,7 +345,7 @@
 .summary-table td:last-child {
   text-align: right;
   font-weight: 700;
-  color: white;
+  color: var(--text-primary);
 }
 
 .chart-wrap {
@@ -118,7 +353,6 @@
   height: 260px;
 }
 
-/* Customized list style for a premium touch */
 .effects-list, .reco-list {
   margin: 0; 
   padding-left: 0;
@@ -160,6 +394,8 @@
 @media (max-width: 860px) {
   .dashboard-grid { grid-template-columns: 1fr; }
   .aqi-card { padding: 28px 48px; }
+  .gear-grid { grid-template-columns: 1fr; }
+  .checklist-items { grid-template-columns: 1fr; }
 }
 
 @media print {
@@ -173,14 +409,14 @@
   .dashboard { 
     padding: 0; 
   }
-  .panel {
+  .panel, .safety-hub-panel {
     background: transparent !important;
     border: 1px solid #ccc !important;
     color: black !important;
     box-shadow: none !important;
     page-break-inside: avoid;
   }
-  .panel h2 {
+  .panel h2, .safety-hub-header h2 {
     color: black !important;
     border-left-color: #333 !important;
   }
@@ -191,7 +427,103 @@
   .summary-table td:last-child {
     color: black !important;
   }
-  .effects-list li, .reco-list li {
-    color: black !important;
-  }
 }
+
+/* Location & Real-Time Badge */
+.location-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #EFF6FF;
+  border: 1.5px solid #BAE6FD;
+  color: #0284C7;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+}
+
+.panel-full {
+  grid-column: 1 / -1;
+}
+
+.diseases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.disease-card {
+  background: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+}
+
+.disease-card:hover {
+  border-color: #CBD5E1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.disease-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.disease-card-title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+.disease-risk-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.risk-low {
+  background: #DCFCE7;
+  color: #15803D;
+}
+
+.risk-moderate {
+  background: #FEF9C3;
+  color: #A16207;
+}
+
+.risk-high {
+  background: #FFEDD5;
+  color: #C2410C;
+}
+
+.risk-severe {
+  background: #FEE2E2;
+  color: #B91C1C;
+}
+
+.risk-critical {
+  background: #7F1D1D;
+  color: #FFFFFF;
+}
+
+.disease-card-desc {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Real-Time TN District Air Quality Prediction — AirSense</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/form.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <nav class="navbar">
+      <a href="index.html" class="brand">
+        <span class="brand-mark">AQ</span>
+        <span class="brand-name">AirSense</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="realtime.html" class="active">📍 Real-Time Prediction</a></li>
+        <li><a href="manual.html">📝 Manual Prediction</a></li>
+      </ul>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+    </nav>
+  </header>
+
+  <main class="form-page">
+    <div class="form-intro">
+      <p class="eyebrow">Real-Time District Feed</p>
+      <h1>Real-Time Air Quality &amp; Disease Prediction</h1>
+      <p class="hero-sub">
+        Select any Tamil Nadu district (e.g. <strong>Trichy</strong>, <strong>Chennai</strong>, <strong>Coimbatore</strong>) to instantly fetch real-time air quality readings, predict AQI via our R Random Forest ML model, and view potential medical disease risks.
+      </p>
+    </div>
+
+    <!-- SECTION: REAL-TIME TAMIL NADU DISTRICT PREDICTION MODE -->
+    <section id="realtimeSection" class="mode-section">
+      <!-- Quick Select Pills -->
+      <div class="quick-pills-wrap">
+        <span class="quick-pills-label">Popular Hubs:</span>
+        <div class="quick-pills">
+          <button type="button" class="pill-btn" data-district="Trichy">📍 Trichy (Tiruchirappalli)</button>
+          <button type="button" class="pill-btn" data-district="Chennai">📍 Chennai</button>
+          <button type="button" class="pill-btn" data-district="Coimbatore">📍 Coimbatore</button>
+          <button type="button" class="pill-btn" data-district="Madurai">📍 Madurai</button>
+          <button type="button" class="pill-btn" data-district="Salem">📍 Salem</button>
+          <button type="button" class="pill-btn" data-district="Tirunelveli">📍 Tirunelveli</button>
+          <button type="button" class="pill-btn" data-district="Erode">📍 Erode</button>
+          <button type="button" class="pill-btn" data-district="Vellore">📍 Vellore</button>
+        </div>
+      </div>
+
+      <!-- District Search Bar -->
+      <div class="district-search-wrap">
+        <input type="text" id="districtSearch" class="search-input" placeholder="🔍 Search district in Tamil Nadu (e.g., Trichy, Thanjavur, Karur, Ooty)..." />
+      </div>
+
+      <!-- All 38 Tamil Nadu Districts Grid -->
+      <div class="district-grid" id="districtGrid">
+        <!-- Rendered dynamically via JavaScript -->
+      </div>
+
+      <!-- Live Data Fetching & Prediction Box -->
+      <div id="livePreviewBox" class="live-preview-box hidden">
+        <div class="preview-header">
+          <div class="preview-title-group">
+            <span class="live-badge pulse">📡 REAL-TIME FEED</span>
+            <h3 id="previewDistrictName">Trichy (Tiruchirappalli)</h3>
+            <span id="previewTimestamp" class="preview-timestamp">Updated just now</span>
+          </div>
+          <button type="button" class="btn-close-preview" id="closePreviewBtn" title="Close live view">✕</button>
+        </div>
+
+        <div id="previewLoading" class="preview-loading hidden">
+          <div class="spinner"></div>
+          <p>Fetching live satellite &amp; monitoring station data for <span id="loadingDistrictName">Trichy</span>…</p>
+        </div>
+
+        <div id="previewContent" class="preview-content">
+          <div class="pollutant-cards-grid" id="pollutantCards">
+            <!-- Dynamically populated live pollutant cards -->
+          </div>
+
+          <div class="preview-actions-bar">
+            <div class="persona-select-group">
+              <label for="rtPersona">Target Risk Persona:</label>
+              <select id="rtPersona" class="select-input select-sm">
+                <option value="general">🏡 General Population</option>
+                <option value="sensitive">🫁 Sensitive / Asthma Patients</option>
+                <option value="children_elderly">👶 Children &amp; Seniors</option>
+                <option value="athletes">🏃 Outdoor Athletes</option>
+                <option value="workers">👷 Outdoor Workers</option>
+              </select>
+            </div>
+
+            <div class="action-btns">
+              <a href="manual.html" id="copyToManualBtn" class="btn btn-ghost">📥 Go to Manual Form</a>
+              <button type="button" id="predictRealTimeBtn" class="btn btn-primary">🚀 Predict AQI &amp; Disease Risk →</button>
+            </div>
+          </div>
+        </div>
+
+        <p id="realTimeStatus" class="form-status" role="alert" aria-live="polite"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>AirSense — Air Quality Analysis &amp; Disease Prediction Using Machine Learning with R. Academic project.</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/form.js"></script>
+</body>
+</html>

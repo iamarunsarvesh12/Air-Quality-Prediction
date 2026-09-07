@@ -27,80 +27,184 @@
 
   <main class="form-page">
     <div class="form-intro">
-      <p class="eyebrow">Step 1 of 2</p>
-      <h1>Enter today's pollutant readings</h1>
+      <p class="eyebrow">Air Quality &amp; Disease Prediction</p>
+      <h1>Choose Prediction Method</h1>
       <p class="hero-sub">
-        Values usually come from a local monitoring station or sensor. Leave a field
-        blank only if you don't have a reading — required fields are marked.
+        Predict AQI and disease risk using <strong>Real-Time Tamil Nadu District Data</strong> or enter <strong>Manual Data</strong>.
       </p>
     </div>
 
-    <form id="aqiForm" class="aqi-form" novalidate>
-      <div class="form-grid">
+    <!-- Mode Selector Tabs -->
+    <div class="mode-tabs">
+      <button class="mode-btn active" id="tabRealTime" type="button">
+        📍 Real-Time Tamil Nadu Districts
+      </button>
+      <button class="mode-btn" id="tabManual" type="button">
+        📝 Manual Data Entry
+      </button>
+    </div>
 
-        <div class="field">
-          <label for="pm25">PM2.5 <span class="req">*</span> <span class="unit">µg/m³</span></label>
-          <input type="number" id="pm25" name="pm25" min="0" step="0.1" required placeholder="e.g. 35.4">
-          <span class="error-msg" data-for="pm25"></span>
-        </div>
-
-        <div class="field">
-          <label for="pm10">PM10 <span class="req">*</span> <span class="unit">µg/m³</span></label>
-          <input type="number" id="pm10" name="pm10" min="0" step="0.1" required placeholder="e.g. 60.0">
-          <span class="error-msg" data-for="pm10"></span>
-        </div>
-
-        <div class="field">
-          <label for="no2">NO₂ <span class="req">*</span> <span class="unit">ppb</span></label>
-          <input type="number" id="no2" name="no2" min="0" step="0.1" required placeholder="e.g. 20.0">
-          <span class="error-msg" data-for="no2"></span>
-        </div>
-
-        <div class="field">
-          <label for="so2">SO₂ <span class="req">*</span> <span class="unit">ppb</span></label>
-          <input type="number" id="so2" name="so2" min="0" step="0.1" required placeholder="e.g. 5.0">
-          <span class="error-msg" data-for="so2"></span>
-        </div>
-
-        <div class="field">
-          <label for="co">CO <span class="req">*</span> <span class="unit">ppm</span></label>
-          <input type="number" id="co" name="co" min="0" step="0.01" required placeholder="e.g. 0.8">
-          <span class="error-msg" data-for="co"></span>
-        </div>
-
-        <div class="field">
-          <label for="o3">O₃ <span class="req">*</span> <span class="unit">ppb</span></label>
-          <input type="number" id="o3" name="o3" min="0" step="0.1" required placeholder="e.g. 30.0">
-          <span class="error-msg" data-for="o3"></span>
-        </div>
-
-        <div class="field">
-          <label for="temperature">Temperature <span class="req">*</span> <span class="unit">°C</span></label>
-          <input type="number" id="temperature" name="temperature" step="0.1" required placeholder="e.g. 28.5">
-          <span class="error-msg" data-for="temperature"></span>
-        </div>
-
-        <div class="field">
-          <label for="humidity">Humidity <span class="req">*</span> <span class="unit">%</span></label>
-          <input type="number" id="humidity" name="humidity" min="0" max="100" step="0.1" required placeholder="e.g. 55">
-          <span class="error-msg" data-for="humidity"></span>
-        </div>
-
-        <div class="field">
-          <label for="windSpeed">Wind Speed <span class="req">*</span> <span class="unit">km/h</span></label>
-          <input type="number" id="windSpeed" name="windSpeed" min="0" step="0.1" required placeholder="e.g. 12">
-          <span class="error-msg" data-for="windSpeed"></span>
-        </div>
-
+    <!-- SECTION 1: REAL-TIME TAMIL NADU DISTRICT PREDICTION MODE -->
+    <section id="realtimeSection" class="mode-section active">
+      <div class="district-header">
+        <h2>Select Tamil Nadu District</h2>
+        <p>Click any district below (e.g. <strong>Trichy</strong>, <strong>Chennai</strong>, <strong>Coimbatore</strong>) to fetch live real-time air quality readings and predict disease risks instantly.</p>
       </div>
 
-      <p id="formStatus" class="form-status" role="alert" aria-live="polite"></p>
-
-      <div class="form-actions">
-        <button type="reset" class="btn btn-ghost" id="resetBtn">Reset</button>
-        <button type="submit" class="btn btn-primary" id="analyzeBtn">Analyze Air Quality →</button>
+      <!-- Quick Select Pills -->
+      <div class="quick-pills-wrap">
+        <span class="quick-pills-label">Popular Hubs:</span>
+        <div class="quick-pills">
+          <button type="button" class="pill-btn" data-district="Trichy">📍 Trichy (Tiruchirappalli)</button>
+          <button type="button" class="pill-btn" data-district="Chennai">📍 Chennai</button>
+          <button type="button" class="pill-btn" data-district="Coimbatore">📍 Coimbatore</button>
+          <button type="button" class="pill-btn" data-district="Madurai">📍 Madurai</button>
+          <button type="button" class="pill-btn" data-district="Salem">📍 Salem</button>
+          <button type="button" class="pill-btn" data-district="Tirunelveli">📍 Tirunelveli</button>
+          <button type="button" class="pill-btn" data-district="Erode">📍 Erode</button>
+          <button type="button" class="pill-btn" data-district="Vellore">📍 Vellore</button>
+        </div>
       </div>
-    </form>
+
+      <!-- District Search Bar -->
+      <div class="district-search-wrap">
+        <input type="text" id="districtSearch" class="search-input" placeholder="🔍 Search district in Tamil Nadu (e.g., Trichy, Thanjavur, Karur, Ooty)..." />
+      </div>
+
+      <!-- All 38 Tamil Nadu Districts Grid -->
+      <div class="district-grid" id="districtGrid">
+        <!-- Rendered dynamically via JavaScript -->
+      </div>
+
+      <!-- Live Data Fetching & Prediction Box -->
+      <div id="livePreviewBox" class="live-preview-box hidden">
+        <div class="preview-header">
+          <div class="preview-title-group">
+            <span class="live-badge pulse">📡 REAL-TIME FEED</span>
+            <h3 id="previewDistrictName">Trichy (Tiruchirappalli)</h3>
+            <span id="previewTimestamp" class="preview-timestamp">Updated just now</span>
+          </div>
+          <button type="button" class="btn-close-preview" id="closePreviewBtn" title="Close live view">✕</button>
+        </div>
+
+        <div id="previewLoading" class="preview-loading hidden">
+          <div class="spinner"></div>
+          <p>Fetching live satellite &amp; monitoring station data for <span id="loadingDistrictName">Trichy</span>…</p>
+        </div>
+
+        <div id="previewContent" class="preview-content">
+          <div class="pollutant-cards-grid" id="pollutantCards">
+            <!-- Dynamically populated live pollutant cards -->
+          </div>
+
+          <div class="preview-actions-bar">
+            <div class="persona-select-group">
+              <label for="rtPersona">Target Risk Persona:</label>
+              <select id="rtPersona" class="select-input select-sm">
+                <option value="general">🏡 General Population</option>
+                <option value="sensitive">🫁 Sensitive / Asthma Patients</option>
+                <option value="children_elderly">👶 Children &amp; Seniors</option>
+                <option value="athletes">🏃 Outdoor Athletes</option>
+                <option value="workers">👷 Outdoor Workers</option>
+              </select>
+            </div>
+
+            <div class="action-btns">
+              <button type="button" id="copyToManualBtn" class="btn btn-ghost">📥 Copy to Manual Form</button>
+              <button type="button" id="predictRealTimeBtn" class="btn btn-primary">🚀 Predict AQI &amp; Disease Risk →</button>
+            </div>
+          </div>
+        </div>
+
+        <p id="realTimeStatus" class="form-status" role="alert" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <!-- SECTION 2: MANUAL DATA ENTRY MODE -->
+    <section id="manualSection" class="mode-section hidden">
+      <div class="manual-intro">
+        <h2>Manual Data Entry Form</h2>
+        <p class="hero-sub">Enter custom pollutant &amp; weather measurements for precise ML prediction.</p>
+      </div>
+
+      <form id="aqiForm" class="aqi-form" novalidate>
+        <div class="form-grid">
+
+          <div class="field">
+            <label for="pm25">PM2.5 <span class="req">*</span> <span class="unit">µg/m³</span></label>
+            <input type="number" id="pm25" name="pm25" min="0" step="0.1" required placeholder="e.g. 35.4">
+            <span class="error-msg" data-for="pm25"></span>
+          </div>
+
+          <div class="field">
+            <label for="pm10">PM10 <span class="req">*</span> <span class="unit">µg/m³</span></label>
+            <input type="number" id="pm10" name="pm10" min="0" step="0.1" required placeholder="e.g. 60.0">
+            <span class="error-msg" data-for="pm10"></span>
+          </div>
+
+          <div class="field">
+            <label for="no2">NO₂ <span class="req">*</span> <span class="unit">ppb</span></label>
+            <input type="number" id="no2" name="no2" min="0" step="0.1" required placeholder="e.g. 20.0">
+            <span class="error-msg" data-for="no2"></span>
+          </div>
+
+          <div class="field">
+            <label for="so2">SO₂ <span class="req">*</span> <span class="unit">ppb</span></label>
+            <input type="number" id="so2" name="so2" min="0" step="0.1" required placeholder="e.g. 5.0">
+            <span class="error-msg" data-for="so2"></span>
+          </div>
+
+          <div class="field">
+            <label for="co">CO <span class="req">*</span> <span class="unit">ppm</span></label>
+            <input type="number" id="co" name="co" min="0" step="0.01" required placeholder="e.g. 0.8">
+            <span class="error-msg" data-for="co"></span>
+          </div>
+
+          <div class="field">
+            <label for="o3">O₃ <span class="req">*</span> <span class="unit">ppb</span></label>
+            <input type="number" id="o3" name="o3" min="0" step="0.1" required placeholder="e.g. 30.0">
+            <span class="error-msg" data-for="o3"></span>
+          </div>
+
+          <div class="field">
+            <label for="temperature">Temperature <span class="req">*</span> <span class="unit">°C</span></label>
+            <input type="number" id="temperature" name="temperature" step="0.1" required placeholder="e.g. 28.5">
+            <span class="error-msg" data-for="temperature"></span>
+          </div>
+
+          <div class="field">
+            <label for="humidity">Humidity <span class="req">*</span> <span class="unit">%</span></label>
+            <input type="number" id="humidity" name="humidity" min="0" max="100" step="0.1" required placeholder="e.g. 55">
+            <span class="error-msg" data-for="humidity"></span>
+          </div>
+
+          <div class="field">
+            <label for="windSpeed">Wind Speed <span class="req">*</span> <span class="unit">km/h</span></label>
+            <input type="number" id="windSpeed" name="windSpeed" min="0" step="0.1" required placeholder="e.g. 12">
+            <span class="error-msg" data-for="windSpeed"></span>
+          </div>
+
+          <div class="field field-full">
+            <label for="persona">Target Risk Persona <span class="unit">For Personalized Safety Advice</span></label>
+            <select id="persona" name="persona" class="select-input">
+              <option value="general">🏡 General Population / Household Residents</option>
+              <option value="sensitive">🫁 Sensitive Groups (Asthma, Respiratory &amp; Heart Patients)</option>
+              <option value="children_elderly">👶 Children, Pregnant Women &amp; Seniors</option>
+              <option value="athletes">🏃 Outdoor Athletes, Runners &amp; Cyclists</option>
+              <option value="workers">👷 Outdoor Workers, Construction &amp; Field Staff</option>
+            </select>
+          </div>
+
+        </div>
+
+        <p id="formStatus" class="form-status" role="alert" aria-live="polite"></p>
+
+        <div class="form-actions">
+          <button type="reset" class="btn btn-ghost" id="resetBtn">Reset</button>
+          <button type="submit" class="btn btn-primary" id="analyzeBtn">Analyze Air Quality →</button>
+        </div>
+      </form>
+    </section>
   </main>
 
   <footer class="site-footer">

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live District Dashboard — AeroSense TN</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Site Navigation -->
+  <header class="site-header">
+    <nav class="navbar">
+      <a href="index.html" class="brand">
+        <span class="brand-mark">AQ</span>
+        <span class="brand-name">AeroSense TN</span>
+        <span class="brand-tag">Live Intelligence</span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="live-dashboard.html" class="active">Live Dashboard</a></li>
+        <li><a href="manual-prediction.html">Manual Prediction</a></li>
+        <li><a href="manual-prediction.html" class="nav-cta">Manual Entry Mode →</a></li>
+      </ul>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+    </nav>
+  </header>
+
+  <main class="container">
+
+    <!-- Header Intro -->
+    <div style="margin-bottom: 24px;">
+      <span class="eyebrow">TAMIL NADU ENVIRONMENTAL INTELLIGENCE</span>
+      <h1 style="font-size: 2.4rem; color: var(--text-primary); margin-top: 4px;">District-Wise Air Quality &amp; Disease Dashboard</h1>
+      <p style="color: var(--text-secondary); max-width: 800px;">
+        Live public telemetry ingestion, automated preprocessing, Random Forest machine learning AQI prediction, 24-hour predictive trend analysis, and disease risk evaluation across all 38 Tamil Nadu districts.
+      </p>
+      <div id="dashboardStatus" style="font-size: 0.85rem; font-weight: 600; color: #0284C7; margin-top: 6px;"></div>
+    </div>
+
+    <!-- Main Dashboard Grid -->
+    <div class="dashboard-grid">
+
+      <!-- LEFT SIDEBAR: DISTRICT SELECTOR -->
+      <aside class="district-sidebar">
+        <h3 style="font-size: 1.1rem; margin-bottom: 12px; color: var(--text-primary);">Tamil Nadu Districts (38)</h3>
+        <div class="search-wrap">
+          <input type="text" id="districtSearch" class="search-input" placeholder="🔍 Search district (Trichy, Chennai...)" />
+        </div>
+        <div class="district-list" id="districtList">
+          <!-- Populated by app.js -->
+        </div>
+      </aside>
+
+      <!-- RIGHT MAIN CONTENT: TELEMETRY & PREDICTIONS -->
+      <div class="dashboard-main">
+
+        <!-- 1. AQI Hero Display Card -->
+        <section class="aqi-hero-card">
+          <div class="aqi-dial-box">
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">CURRENT PREDICTED AQI</div>
+            <div class="aqi-large-number" id="aqiNumber">--</div>
+            <span class="aqi-status-pill" id="aqiCategory">Loading…</span>
+          </div>
+
+          <div class="aqi-meta-group">
+            <div class="station-title-row">
+              <div>
+                <h2 class="station-name" id="stationName">Tiruchirappalli (Trichy)</h2>
+                <span id="stationZone" style="font-size: 0.85rem; color: var(--text-muted);">Central TN · 10.79°N, 78.70°E</span>
+              </div>
+              <div class="live-indicator" id="stationLiveStatus">
+                <span class="pulse-dot"></span> Live Station Feed
+              </div>
+            </div>
+
+            <p id="aqiSummary" style="font-size: 1.05rem; color: var(--text-secondary); line-height: 1.5;">
+              Fetching live atmospheric sensor telemetry…
+            </p>
+
+            <div style="display: flex; gap: 24px; font-size: 0.9rem; border-top: 1px solid #E2E8F0; padding-top: 12px; margin-top: 4px;">
+              <div>
+                <span style="display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Dominant Pollutant</span>
+                <strong id="primaryPollutant" style="font-size: 1.1rem; color: #DC2626;">PM2.5</strong>
+              </div>
+              <div>
+                <span style="display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Target Risk Profile</span>
+                <select id="personaSelect" style="padding: 4px 8px; font-size: 0.85rem; border: 1px solid var(--border); border-radius: 6px; outline: none;">
+                  <option value="general">🏡 General Public</option>
+                  <option value="sensitive">🫁 Asthma &amp; Sensitive Patients</option>
+                  <option value="children_elderly">👶 Children &amp; Seniors</option>
+                  <option value="athletes">🏃 Outdoor Athletes</option>
+                  <option value="workers">👷 Outdoor Workers</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. Pollutants Mini Grid -->
+        <section>
+          <h3 style="font-size: 1.25rem; margin-bottom: 12px;">🧪 Atmospheric Pollutant &amp; Weather Telemetry</h3>
+          <div class="pollutants-grid" id="pollutantsGrid">
+            <!-- Populated dynamically by app.js -->
+          </div>
+        </section>
+
+        <!-- 3. Preprocessing Status Tracker -->
+        <section class="pipeline-status-panel">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="font-size: 1.15rem;">⚙️ Automated R Data Preprocessing Pipeline</h3>
+            <span style="font-size: 0.75rem; background: #ECFDF5; color: #059669; font-weight: 700; padding: 3px 8px; border-radius: 12px;">ACTIVE STATUS</span>
+          </div>
+          <div class="pipeline-steps" id="pipelineSteps">
+            <!-- Populated dynamically by app.js -->
+          </div>
+        </section>
+
+        <!-- 4. Visualizations: 24h Trend Chart & Pollutant Profile -->
+        <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+          <div style="background: #FFFFFF; border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: var(--shadow-sm);">
+            <h4 style="font-size: 1.05rem; margin-bottom: 12px;">📈 24-Hour Predictive AQI Forecast Trajectory</h4>
+            <div style="height: 220px; position: relative;">
+              <canvas id="trendChart"></canvas>
+            </div>
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: var(--shadow-sm);">
+            <h4 style="font-size: 1.05rem; margin-bottom: 12px;">📊 Pollutant Breakdown (Relative Concentration)</h4>
+            <div style="height: 220px; position: relative;">
+              <canvas id="pollutantChart"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. Tamil Nadu Hubs Comparison Chart -->
+        <section style="background: #FFFFFF; border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: var(--shadow-sm);">
+          <h4 style="font-size: 1.05rem; margin-bottom: 12px;">🗺️ Multi-District AQI Benchmark Comparison</h4>
+          <div style="height: 200px; position: relative;">
+            <canvas id="districtChart"></canvas>
+          </div>
+        </section>
+
+        <!-- 6. Disease & Clinical Risk Mapping Panel -->
+        <section class="health-panel">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <span class="eyebrow" style="background: #FEF2F2; color: #DC2626;">CLINICAL RISK ENGINE</span>
+              <h3 style="font-size: 1.5rem; margin-top: 4px;">🏥 Disease Vulnerabilities &amp; Health Impact Mapping</h3>
+            </div>
+          </div>
+
+          <div id="personaAdviceBox">
+            <!-- Populated by app.js -->
+          </div>
+
+          <div class="diseases-grid" id="diseasesGrid">
+            <!-- Populated by app.js -->
+          </div>
+        </section>
+
+        <!-- 7. Data & Prediction Transparency Section -->
+        <section class="transparency-section">
+          <h4 style="font-size: 1.05rem; color: var(--text-primary);">🔍 Data &amp; Prediction Transparency Audit</h4>
+          <div class="transparency-grid" id="transparencyGrid">
+            <!-- Populated by app.js -->
+          </div>
+        </section>
+
+        <!-- Disclaimer -->
+        <div class="disclaimer-box">
+          <strong>Health Analysis Disclaimer:</strong> This health analysis provides general environmental risk information based on Indian National Air Quality Index (NAQS) parameters and is not a clinical medical diagnosis. Consult a healthcare professional for clinical advice.
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>AeroSense TN — Tamil Nadu Air Quality Predictor &amp; Health Risk Intelligence. R Plumber REST API.</p>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

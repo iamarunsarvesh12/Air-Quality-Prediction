@@ -53,8 +53,12 @@ train_aqi_model <- function() {
   print(importance(model))
 
   # 6. Save trained model
-  saveRDS(model, "model.rds")
-  message("Model saved to model.rds")
+  out_path <- "model.rds"
+  if (dir.exists("backend")) {
+    out_path <- file.path("backend", "model.rds")
+  }
+  saveRDS(model, out_path)
+  message(sprintf("Model saved to '%s'", out_path))
 
   return(model)
 }

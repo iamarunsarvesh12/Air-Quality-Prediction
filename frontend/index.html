@@ -3,103 +3,178 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AirSense — Air Quality Analysis &amp; Disease Prediction</title>
+  <title>AeroSense TN — Tamil Nadu Air Quality Predictor &amp; Health Risk Intelligence</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
 </head>
 <body>
 
+  <!-- Site Navigation -->
   <header class="site-header">
     <nav class="navbar">
       <a href="index.html" class="brand">
         <span class="brand-mark">AQ</span>
-        <span class="brand-name">AirSense</span>
+        <span class="brand-name">AeroSense TN</span>
+        <span class="brand-tag">Tamil Nadu</span>
       </a>
-      <ul class="nav-links">
-        <li><a href="#about">About</a></li>
-        <li><a href="#how-it-works">How it works</a></li>
-        <li><a href="#awareness">Air &amp; Health</a></li>
-        <li><a href="analysis.html" class="nav-cta">Analyze Air Quality</a></li>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="live-dashboard.html">Live Dashboard</a></li>
+        <li><a href="manual-prediction.html">Manual Prediction</a></li>
+        <li><a href="live-dashboard.html" class="nav-cta">Explore Live Air Quality →</a></li>
       </ul>
       <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
     </nav>
   </header>
 
-  <main>
+  <main class="container">
+
+    <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
-        <p class="eyebrow">Machine Learning · R Backend</p>
-        <h1>Know the air you breathe, <span>before it affects you.</span></h1>
+        <span class="eyebrow">R Machine Learning · Public Telemetry API</span>
+        <h1>Tamil Nadu Air Quality <span>Intelligence Platform</span></h1>
         <p class="hero-sub">
-          AirSense predicts the Air Quality Index from live pollutant readings using a
-          Random Forest model trained in R, then maps the result to real health risks
-          and recommendations — instantly.
+          <strong>Understand the Air. Predict the Risk.</strong><br>
+          Continuous real-time air quality monitoring across all 38 districts of Tamil Nadu, powered by a Random Forest ML backend in R to forecast 24-hour pollution trajectories and map potential disease vulnerabilities.
         </p>
         <div class="hero-actions">
-          <a href="analysis.html" class="btn btn-primary">Analyze Air Quality →</a>
-          <a href="#how-it-works" class="btn btn-ghost">See how it works</a>
+          <a href="live-dashboard.html" class="btn btn-primary">Explore Live Air Quality →</a>
+          <a href="manual-prediction.html" class="btn btn-ghost">Manual Prediction Mode</a>
         </div>
       </div>
-      <div class="hero-visual" aria-hidden="true">
-        <div class="aqi-dial">
-          <span class="aqi-dial-value">--</span>
-          <span class="aqi-dial-label">Live AQI preview</span>
+      <div class="hero-visual">
+        <div class="aqi-dial-box" style="background: linear-gradient(135deg, #F0F9FF, #FFFFFF); border-color: #BAE6FD;">
+          <div style="font-size: 0.82rem; font-weight: 700; color: #0284C7; letter-spacing: 0.05em; margin-bottom: 8px;">LIVE TAMIL NADU FEED</div>
+          <div class="aqi-large-number" style="color: #0284C7;">78</div>
+          <span class="aqi-status-pill" style="background: #E0F2FE; color: #0369A1;">Satisfactory</span>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px;">Central Monitoring Network Active</p>
         </div>
       </div>
     </section>
 
-    <section id="about" class="section">
-      <h2>What is AirSense?</h2>
-      <p>
-        Air pollution is linked to respiratory, cardiovascular, and long-term health
-        problems worldwide. AirSense lets you enter local pollutant readings —
-        PM2.5, PM10, NO₂, SO₂, CO, O₃, along with temperature, humidity and wind speed —
-        and returns a predicted Air Quality Index, its category, and the health effects
-        associated with that level.
-      </p>
-    </section>
+    <!-- Live Telemetry Ticker -->
+    <div class="telemetry-ticker">
+      <div class="ticker-inner" id="homeTicker">
+        <span class="ticker-title">📡 REAL-TIME DISTRICT FEED:</span>
+        <div class="ticker-item"><span>Trichy:</span> <span class="ticker-val" style="background: #E0F2FE; color: #0284C7;">AQI 76 (Satisfactory)</span></div>
+        <div class="ticker-item"><span>Chennai:</span> <span class="ticker-val" style="background: #FEF2F2; color: #EF4444;">AQI 142 (Moderate)</span></div>
+        <div class="ticker-item"><span>Coimbatore:</span> <span class="ticker-val" style="background: #ECFDF5; color: #10B981;">AQI 48 (Good)</span></div>
+        <div class="ticker-item"><span>Madurai:</span> <span class="ticker-val" style="background: #FFFBEB; color: #F59E0B;">AQI 92 (Satisfactory)</span></div>
+        <div class="ticker-item"><span>Salem:</span> <span class="ticker-val" style="background: #FFFBEB; color: #F59E0B;">AQI 105 (Moderate)</span></div>
+      </div>
+    </div>
 
-    <section id="how-it-works" class="section">
-      <h2>How it works</h2>
-      <ol class="steps">
-        <li><span class="step-num">01</span> Enter pollutant &amp; weather values</li>
-        <li><span class="step-num">02</span> Data is validated in the browser</li>
-        <li><span class="step-num">03</span> Sent to the R Plumber API</li>
-        <li><span class="step-num">04</span> Random Forest model predicts AQI</li>
-        <li><span class="step-num">05</span> AQI mapped to category &amp; health effects</li>
-        <li><span class="step-num">06</span> Results shown with charts &amp; recommendations</li>
-      </ol>
-    </section>
+    <!-- Dual Prediction Methods Chooser -->
+    <section>
+      <div style="text-align: center; margin-bottom: 32px;">
+        <h2 style="font-size: 2.2rem; color: var(--text-primary);">Two Powerful Prediction Modes</h2>
+        <p style="color: var(--text-secondary); max-width: 600px; margin: 8px auto 0;">Choose how you want to analyze environmental air quality and calculate clinical health risk indices.</p>
+      </div>
 
-    <section id="awareness" class="section awareness">
-      <h2>Why air quality matters</h2>
-      <div class="cards">
-        <div class="card">
-          <h3>Good (0–50)</h3>
-          <p>Air quality is satisfactory; little or no risk.</p>
+      <div class="cards-grid-2">
+        <!-- Card 1 -->
+        <div class="feature-card" style="border-top: 4px solid var(--primary);">
+          <div>
+            <span class="card-badge" style="background: #E0F2FE; color: #0284C7;">METHOD 1 · REAL-TIME SATELLITE &amp; STATIONS</span>
+            <h3 style="font-size: 1.6rem; margin-bottom: 12px;">Live District Dashboard</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+              Select any of the <strong>38 districts of Tamil Nadu</strong> (Trichy, Chennai, Coimbatore, Madurai, Salem, etc.) to fetch real-time public telemetry, run the automated preprocessing pipeline, and predict 24-hour AQI trends.
+            </p>
+          </div>
+          <a href="live-dashboard.html" class="btn btn-primary">Open Live Dashboard →</a>
         </div>
-        <div class="card">
-          <h3>Moderate (51–100)</h3>
-          <p>Acceptable, but may affect very sensitive individuals.</p>
-        </div>
-        <div class="card">
-          <h3>Unhealthy (101–200)</h3>
-          <p>Sensitive groups may experience health effects.</p>
-        </div>
-        <div class="card">
-          <h3>Hazardous (300+)</h3>
-          <p>Serious risk of health effects for everyone.</p>
+
+        <!-- Card 2 -->
+        <div class="feature-card" style="border-top: 4px solid var(--accent);">
+          <div>
+            <span class="card-badge" style="background: #EEF2FF; color: #6366F1;">METHOD 2 · CUSTOM TELEMETRY</span>
+            <h3 style="font-size: 1.6rem; margin-bottom: 12px;">Manual Sensor Prediction</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+              Input custom pollutant readings (PM2.5, PM10, NO₂, SO₂, CO, O₃, NH₃, Temp, Humidity) from local IoT air sensors or laboratory stations for instantaneous R Random Forest model inference.
+            </p>
+          </div>
+          <a href="manual-prediction.html" class="btn btn-ghost" style="border-color: #6366F1; color: #4F46E5;">Open Manual Prediction Form →</a>
         </div>
       </div>
-      <a href="analysis.html" class="btn btn-primary center">Check today's air quality</a>
     </section>
+
+    <!-- How it works pipeline -->
+    <section style="margin: 64px 0;">
+      <h2 style="font-size: 2rem; margin-bottom: 24px; text-align: center;">End-to-End Data &amp; AI Pipeline</h2>
+      <div class="pipeline-steps" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+        <div class="pipeline-step">
+          <div class="pipeline-step-title">01 · Telemetry Fetch</div>
+          <div>Public open APIs &amp; CPCB station feeds.</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="pipeline-step-title">02 · Preprocessing</div>
+          <div>Missing value imputation &amp; outlier treatment.</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="pipeline-step-title">03 · Feature Engine</div>
+          <div>Pollutant ratios &amp; dispersion metrics.</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="pipeline-step-title">04 · Random Forest</div>
+          <div>R backend regression &amp; 24h trajectory.</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="pipeline-step-title">05 · Disease Mapping</div>
+          <div>Asthma, bronchitis &amp; cardiovascular analysis.</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="pipeline-step-title">06 · Intelligence UI</div>
+          <div>Interactive dashboards &amp; safety guidance.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AQI Standard Reference Cards -->
+    <section style="margin-bottom: 48px;">
+      <h2 style="font-size: 2rem; margin-bottom: 20px;">National Air Quality Index (NAQS) Standards</h2>
+      <div class="pollutants-grid">
+        <div class="pollutant-card" style="border-left: 4px solid #10B981;">
+          <div class="pollutant-label" style="color: #059669;">GOOD (0–50)</div>
+          <div style="font-size: 0.85rem; margin-top: 4px; color: var(--text-secondary);">Minimal impact; safe for outdoor activity.</div>
+        </div>
+        <div class="pollutant-card" style="border-left: 4px solid #0284C7;">
+          <div class="pollutant-label" style="color: #0284C7;">SATISFACTORY (51–100)</div>
+          <div style="font-size: 0.85rem; margin-top: 4px; color: var(--text-secondary);">Minor breathing discomfort for sensitive people.</div>
+        </div>
+        <div class="pollutant-card" style="border-left: 4px solid #F59E0B;">
+          <div class="pollutant-label" style="color: #D97706;">MODERATE (101–200)</div>
+          <div style="font-size: 0.85rem; margin-top: 4px; color: var(--text-secondary);">Breathing discomfort to asthma patients &amp; seniors.</div>
+        </div>
+        <div class="pollutant-card" style="border-left: 4px solid #EF4444;">
+          <div class="pollutant-label" style="color: #DC2626;">POOR (201–300)</div>
+          <div style="font-size: 0.85rem; margin-top: 4px; color: var(--text-secondary);">Discomfort to most on prolonged exposure.</div>
+        </div>
+        <div class="pollutant-card" style="border-left: 4px solid #8B5CF6;">
+          <div class="pollutant-label" style="color: #7C3AED;">VERY POOR (301–400)</div>
+          <div style="font-size: 0.85rem; margin-top: 4px; color: var(--text-secondary);">Respiratory illness on prolonged exposure.</div>
+        </div>
+        <div class="pollutant-card" style="border-left: 4px solid #881337;">
+          <div class="pollutant-label" style="color: #881337;">SEVERE (401+)</div>
+          <div style="font-size: 0.85rem; margin-top: 4px; color: var(--text-secondary);">Severe health warning for entire population.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer-box">
+      <strong>Clinical &amp; Environmental Disclaimer:</strong> AeroSense TN provides general environmental intelligence and predictive risk assessments based on public monitoring telemetry. It does not constitute medical diagnosis or healthcare advice.
+    </div>
+
   </main>
 
   <footer class="site-footer">
-    <p>AirSense — Air Quality Analysis &amp; Disease Prediction Using Machine Learning with R. Academic project.</p>
+    <p>AeroSense TN — Tamil Nadu Air Quality Predictor &amp; Health Risk Intelligence. R Plumber API Backend.</p>
   </footer>
 
-  <script src="js/main.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

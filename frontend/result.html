@@ -28,6 +28,7 @@
   <main class="dashboard" id="dashboard">
 
     <section class="result-hero">
+      <div id="locationBadge" class="location-badge hidden"></div>
       <div class="aqi-card" id="aqiCard">
         <span class="aqi-card-label">Predicted AQI</span>
         <span class="aqi-card-value" id="aqiValue">--</span>
@@ -36,7 +37,90 @@
       <p class="aqi-description" id="aqiDescription"></p>
     </section>
 
+    <!-- Personalized Safety & Protection Hub -->
+    <section class="safety-hub-panel" id="safetyHub">
+      <div class="safety-hub-header">
+        <div class="safety-hub-title-group">
+          <span class="safety-hub-badge">PERSONALIZED SAFETY</span>
+          <h2>🛡️ Personalized Safety &amp; Protection Hub</h2>
+          <p class="safety-hub-subtitle">
+            Tailored safety guidelines, respiratory gear specs, and interactive action plan based on your risk profile.
+          </p>
+        </div>
+      </div>
+
+      <!-- Persona Selector Tabs -->
+      <div class="persona-tabs" role="tablist" aria-label="Risk Groups">
+        <button class="persona-tab active" data-persona="general" role="tab">🏡 General Public</button>
+        <button class="persona-tab" data-persona="sensitive" role="tab">🫁 Sensitive / Asthma</button>
+        <button class="persona-tab" data-persona="children_elderly" role="tab">👶 Children &amp; Seniors</button>
+        <button class="persona-tab" data-persona="athletes" role="tab">🏃 Athletes &amp; Fitness</button>
+        <button class="persona-tab" data-persona="workers" role="tab">👷 Outdoor Workers</button>
+      </div>
+
+      <!-- Persona Specific Advice Box -->
+      <div class="persona-advice-box" id="personaAdviceBox">
+        <div class="persona-advice-icon">💡</div>
+        <div class="persona-advice-content">
+          <h3 id="personaAdviceTitle">Safety Advice for General Public</h3>
+          <p id="personaAdviceText">Loading safety advice…</p>
+        </div>
+      </div>
+
+      <!-- 3-Grid Safety Gear Cards -->
+      <div class="gear-grid">
+        <div class="gear-card">
+          <div class="gear-icon">😷</div>
+          <div class="gear-info">
+            <h4>Recommended Mask Gear</h4>
+            <p id="gearMask">Loading…</p>
+          </div>
+        </div>
+
+        <div class="gear-card">
+          <div class="gear-icon">🌬️</div>
+          <div class="gear-info">
+            <h4>Air Purifier &amp; Windows</h4>
+            <p id="gearPurifier">Loading…</p>
+            <span class="gear-sub" id="gearWindows"></span>
+          </div>
+        </div>
+
+        <div class="gear-card">
+          <div class="gear-icon">🏃‍♂️</div>
+          <div class="gear-info">
+            <h4>Physical Exertion Limit</h4>
+            <p id="gearExertion">Loading…</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Precaution Checklist -->
+      <div class="checklist-box">
+        <div class="checklist-header">
+          <h3>📋 Interactive Precaution Checklist</h3>
+          <span class="checklist-progress-text" id="checklistProgressText">0 of 0 Completed</span>
+        </div>
+        <div class="checklist-bar-wrap">
+          <div class="checklist-bar-fill" id="checklistBarFill" style="width: 0%"></div>
+        </div>
+        <ul class="checklist-items" id="checklistItems">
+          <!-- Populated dynamically -->
+        </ul>
+      </div>
+    </section>
+
     <section class="dashboard-grid">
+      <div class="panel panel-full">
+        <h2>🏥 Diseases &amp; Health Conditions Potential Risk Mapping</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: -6px; margin-bottom: 16px;">
+          Based on the predicted Air Quality Index, here are the potential medical diseases and health risks it may trigger or cause:
+        </p>
+        <div class="diseases-grid" id="diseasesGrid">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
       <div class="panel">
         <h2>Pollutant &amp; Weather Summary</h2>
         <table class="summary-table" id="summaryTable">

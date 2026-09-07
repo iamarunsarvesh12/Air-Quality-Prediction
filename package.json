@@ -1,0 +1,20 @@
+{
+  "name": "airsense-air-quality-prediction",
+  "version": "1.0.0",
+  "description": "AirSense - Air Quality Prediction & Disease Mapping System",
+  "main": "run.js",
+  "scripts": {
+    "start": "python run.py",
+    "node-start": "node run.js",
+    "dev": "python run.py"
+  },
+  "keywords": [
+    "air-quality",
+    "aqi",
+    "r-plumber",
+    "random-forest",
+    "machine-learning"
+  ],
+  "author": "",
+  "license": "ISC"
+}
