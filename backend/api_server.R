@@ -1,18 +1,20 @@
 # ===========================================================
 # AeroSense TN — api_server.R (Plumber REST API Controller)
-# Exposes clean REST API endpoints for Frontend consumption
+# Exposes clean, validated REST API endpoints for Frontend consumption
 # ===========================================================
 
 # Manage library paths
-possible_libs <- c("r_libs", "../r_libs", "backend/r_libs", file.path(getwd(), "r_libs"))
+possible_libs <- c("r_libs", "../r_libs", "backend/r_libs", file.path(getwd(), "r_libs"), file.path(getwd(), "backend", "r_libs"))
 for (lib in possible_libs) {
   if (dir.exists(lib)) {
     .libPaths(c(normalizePath(lib), .libPaths()))
   }
 }
 
-library(plumber)
-library(jsonlite)
+suppressPackageStartupMessages({
+  library(plumber)
+  library(jsonlite)
+})
 
 # Load modular components with directory resolution
 get_script_dir <- function() {
@@ -51,13 +53,17 @@ function(req, res) {
 #* System Health & Readiness Check
 #* @serializer unboxedJSON
 #* @get /api/health
-function() {
+function(res) {
+  res$setHeader("Access-Control-Allow-Origin", "*")
+  meta <- get_model_metadata()
   list(
     status = "ok",
     service = "AeroSense TN API Engine",
     version = "2.0.0",
     r_version = R.version.string,
     model = "RandomForest (R randomForest 4.7)",
+    r_squared = meta$r_squared,
+    rmse = meta$rmse,
     districts_supported = length(get_all_districts()),
     timestamp = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z")
   )
@@ -66,7 +72,8 @@ function() {
 #* Get All 38 Tamil Nadu Districts Directory
 #* @serializer unboxedJSON
 #* @get /api/districts
-function() {
+function(res) {
+  res$setHeader("Access-Control-Allow-Origin", "*")
   list(
     status = "success",
     count = length(get_all_districts()),
@@ -74,16 +81,31 @@ function() {
   )
 }
 
+.hubs_cache <- NULL
+.hubs_cache_time <- Sys.time() - 9999
+
 #* Get Live Air Quality Summary for All Major Tamil Nadu Hubs
 #* @serializer unboxedJSON
 #* @get /api/live-data
-function() {
+function(res) {
+  res$setHeader("Access-Control-Allow-Origin", "*")
+  now <- Sys.time()
+  
+  if (!is.null(.hubs_cache) && difftime(now, .hubs_cache_time, units = "secs") < 180) {
+    return(list(
+      status = "success",
+      cached = TRUE,
+      timestamp = format(.hubs_cache_time, "%Y-%m-%dT%H:%M:%S%z"),
+      hubs = .hubs_cache
+    ))
+  }
+  
   districts <- get_all_districts()
   major_ids <- c("trichy", "chennai", "coimbatore", "madurai", "salem", "tirunelveli", "erode", "vellore")
   
   hub_data <- lapply(districts, function(d) {
     if (d$id %in% major_ids) {
-      raw <- fetch_district_air_quality(d$id)
+      raw <- fetch_district_air_quality(d$id, allow_fallback = TRUE)
       pre <- preprocess_air_quality_data(c(raw$pollutants, raw$weather))
       feat <- engineer_features(pre$cleaned_data)
       pred <- run_aqi_prediction(feat$model_df, raw$pollutants, raw$weather)
@@ -106,6 +128,8 @@ function() {
   
   # Remove nulls
   hub_data <- hub_data[!sapply(hub_data, is.null)]
+  .hubs_cache <<- hub_data
+  .hubs_cache_time <<- now
   
   list(
     status = "success",
@@ -117,8 +141,18 @@ function() {
 #* Get Full Air Quality, Prediction & Health Risk for a Specific District
 #* @serializer unboxedJSON
 #* @get /api/air-quality/<district>
-function(district, persona = "general") {
-  raw_feed <- fetch_district_air_quality(district)
+function(district, persona = "general", res) {
+  res$setHeader("Access-Control-Allow-Origin", "*")
+  
+  # Validate district identifier strictly
+  raw_feed <- fetch_district_air_quality(district, allow_fallback = FALSE)
+  if (is.null(raw_feed)) {
+    res$status <- 404
+    return(list(
+      status = "error",
+      error = sprintf("District '%s' not recognized. Please provide a valid Tamil Nadu district ID or name.", district)
+    ))
+  }
   
   # Preprocessing
   raw_input <- c(raw_feed$pollutants, raw_feed$weather)
@@ -170,8 +204,18 @@ function(district, persona = "general") {
 #* Get 24-Hour Forecast & Prediction for a District
 #* @serializer unboxedJSON
 #* @get /api/prediction/<district>
-function(district) {
-  raw_feed <- fetch_district_air_quality(district)
+function(district, res) {
+  res$setHeader("Access-Control-Allow-Origin", "*")
+  
+  raw_feed <- fetch_district_air_quality(district, allow_fallback = FALSE)
+  if (is.null(raw_feed)) {
+    res$status <- 404
+    return(list(
+      status = "error",
+      error = sprintf("District '%s' not recognized. Please provide a valid Tamil Nadu district ID or name.", district)
+    ))
+  }
+  
   prep_result <- preprocess_air_quality_data(c(raw_feed$pollutants, raw_feed$weather))
   feat_result <- engineer_features(prep_result$cleaned_data)
   pred_result <- run_aqi_prediction(feat_result$model_df, raw_feed$pollutants, raw_feed$weather)
@@ -191,6 +235,8 @@ function(district) {
 #* @serializer unboxedJSON
 #* @post /api/manual-prediction
 function(req, res) {
+  res$setHeader("Access-Control-Allow-Origin", "*")
+  
   # Parse body
   body <- req$body
   if (is.character(body)) {
@@ -199,17 +245,56 @@ function(req, res) {
   if (is.data.frame(body)) {
     body <- as.list(body[1, , drop = FALSE])
   }
+  if (!is.list(body) || length(body) == 0) {
+    res$status <- 400
+    return(list(status = "error", error = "Empty or invalid JSON body provided."))
+  }
   
-  persona <- if (!is.null(body$persona) && body$persona != "") body$persona else "general"
-  district_name <- if (!is.null(body$district) && body$district != "") body$district else "Custom Station"
+  persona <- if (!is.null(body$persona) && body$persona != "") as.character(body$persona) else "general"
+  district_name <- if (!is.null(body$district) && body$district != "") as.character(body$district) else "Custom Station"
   
-  # Validate required fields
+  # 1. Validation limits for manual inputs
+  BOUNDS <- list(
+    pm25        = list(min = 0, max = 1000, label = "PM2.5 (µg/m³)"),
+    pm10        = list(min = 0, max = 1500, label = "PM10 (µg/m³)"),
+    no2         = list(min = 0, max = 500,  label = "NO₂ (µg/m³)"),
+    so2         = list(min = 0, max = 500,  label = "SO₂ (µg/m³)"),
+    co          = list(min = 0, max = 50,   label = "CO (mg/m³)"),
+    o3          = list(min = 0, max = 500,  label = "O₃ (µg/m³)"),
+    temperature = list(min = -10, max = 60, label = "Temperature (°C)"),
+    humidity    = list(min = 0, max = 100,  label = "Humidity (%)"),
+    windSpeed   = list(min = 0, max = 150,  label = "Wind Speed (km/h)")
+  )
+  
   required_fields <- c("pm25", "pm10", "no2", "so2", "co", "o3")
+  
+  # Check missing required fields
   for (f in required_fields) {
-    if (is.null(body[[f]]) || is.na(body[[f]])) {
+    if (is.null(body[[f]]) || is.na(body[[f]]) || body[[f]] == "") {
       res$status <- 400
-      res$setHeader("Access-Control-Allow-Origin", "*")
-      return(list(error = paste("Missing required parameter:", f)))
+      return(list(status = "error", error = paste("Missing required parameter:", f)))
+    }
+  }
+  
+  # Validate numeric types and ranges
+  for (f in names(BOUNDS)) {
+    val <- body[[f]]
+    if (f == "windSpeed" && is.null(val) && !is.null(body$wind_speed)) {
+      val <- body$wind_speed
+    }
+    
+    if (!is.null(val) && !is.na(val) && val != "") {
+      num_val <- suppressWarnings(as.numeric(val))
+      if (is.na(num_val) || is.nan(num_val)) {
+        res$status <- 400
+        return(list(status = "error", error = paste("Field must be a valid numeric value:", f)))
+      }
+      
+      b <- BOUNDS[[f]]
+      if (num_val < b$min || num_val > b$max) {
+        res$status <- 400
+        return(list(status = "error", error = sprintf("%s is out of physical range (value: %s, permitted: %g to %g).", b$label, as.character(val), b$min, b$max)))
+      }
     }
   }
   
@@ -260,7 +345,9 @@ function(req, res) {
 #* Get Preprocessing & System Data Status
 #* @serializer unboxedJSON
 #* @get /api/data-status
-function() {
+function(res) {
+  res$setHeader("Access-Control-Allow-Origin", "*")
+  meta <- get_model_metadata()
   list(
     status = "operational",
     pipeline = list(
@@ -270,6 +357,11 @@ function() {
       feature_engineering = "Active",
       random_forest_model = "Loaded (R 4.7)",
       health_risk_engine = "Active (Indian NAAQS)"
+    ),
+    model_metrics = list(
+      r_squared = meta$r_squared,
+      rmse = meta$rmse,
+      mae = meta$mae
     ),
     active_districts = length(get_all_districts()),
     data_sources = list(

@@ -1,31 +1,32 @@
-# 🚀 AirSense — Single-Command Execution Guide
+# 🚀 AeroSense TN — Single-Command Execution Guide
 
-Run the entire AirSense Air Quality Prediction & Disease Mapping system with **one single terminal command**.
+Run the entire AeroSense TN Air Quality Prediction & Health Risk Intelligence system with **one single terminal command** using the **R-First Architecture**.
 
 ---
 
 ## ⚡ How to Run in a Single Command
 
-Open your terminal in the project directory (`C:\Users\Admin\Documents\Air Quality Prediction`) and execute:
+Open your terminal in the project directory (`C:\Users\Admin\Documents\Air_Quality_Prediction`) and execute any of the following:
 
-### Option 1: Python (Recommended)
-```bash
-python run.py
-```
-
-### Option 2: npm
-```bash
-npm start
-```
-
-### Option 3: Windows Batch Script (Double-click or CMD)
+### Option 1: Windows Batch Script (Recommended for Windows)
 ```cmd
 run.bat
 ```
+*(You can also simply double-click `run.bat` in Windows Explorer.)*
 
-### Option 4: Windows PowerShell
+### Option 2: Windows PowerShell
 ```powershell
 .\run.ps1
+```
+
+### Option 3: Direct Rscript
+```powershell
+Rscript run.R
+```
+
+### Option 4: npm
+```bash
+npm start
 ```
 
 ---
@@ -33,30 +34,28 @@ run.bat
 ## ✨ What the Single Command Does Automatically:
 
 1. **Auto-cleans Ports**: Automatically detects and frees ports `8000` and `5500` if previously occupied.
-2. **Environment & Package Verification**: Checks required R packages (`readr`, `dplyr`, `tidyr`, `caret`, `randomForest`, `plumber`) and installs any missing ones into `r_libs/`.
-3. **Automated ML Training**: Verifies `model.rds` exists; if missing, automatically trains the Random Forest model on `dataset/air_quality.csv`.
-4. **Starts Backend API**: Launches the R Plumber API on `http://127.0.0.1:8000`.
-5. **Starts Frontend Server**: Serves the modern Light Theme web app on `http://localhost:5500`.
-6. **Auto-Opens Web Browser**: Launches your default browser directly to `http://localhost:5500`.
+2. **Environment & Package Verification**: Checks required R packages (`plumber`, `randomForest`, `jsonlite`, `readr`, `dplyr`, `curl`, `httr`, `httpuv`) and displays their versions.
+3. **Automated ML Training**: Verifies `model.rds` exists; if missing, automatically runs the Random Forest training pipeline on `backend/dataset/air_quality.csv`.
+4. **Starts Backend REST API**: Launches the R Plumber REST API on `http://127.0.0.1:8000`.
+5. **Starts Frontend Static Server**: Serves the modern Hallmark web application on `http://localhost:5500` using R's lightweight `httpuv` engine.
+6. **Auto-Opens Web Browser**: Automatically opens your default browser directly to `http://localhost:5500`.
 7. **Clean Graceful Shutdown**: Pressing `Ctrl + C` in the terminal cleanly terminates both servers.
 
 ---
 
 ## 🌐 URLs & Verification
 
-- **Frontend Web Application (Light Theme):** [http://localhost:5500](http://localhost:5500)
-- **Backend API Health Check:** [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
-- **Interactive Swagger Docs:** [http://127.0.0.1:8000/__docs__/](http://127.0.0.1:8000/__docs__/)
+- **Frontend Web Application:** [http://localhost:5500](http://localhost:5500)
+- **Live District Dashboard:** [http://localhost:5500/live-dashboard.html](http://localhost:5500/live-dashboard.html)
+- **Manual Prediction Engine:** [http://localhost:5500/manual-prediction.html](http://localhost:5500/manual-prediction.html)
+- **Backend API Health Check:** [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health)
+- **All 38 Districts Directory:** [http://127.0.0.1:8000/api/districts](http://127.0.0.1:8000/api/districts)
 
 ---
 
-## 🛡️ New Feature Highlights (Light Theme)
+## 🧪 Automated Testing
 
-1. **Personalized Safety & Protection Hub**:
-   - Filter safety recommendations for **Athletes**, **Asthma & Sensitive Groups**, **Children & Seniors**, and **Outdoor Workers**.
-2. **Actionable Gear Cards**:
-   - Recommended mask types (N95 / KN95), HEPA air purifier settings, and physical exertion limits.
-3. **Interactive Precaution Checklist**:
-   - Check off safety precautions with a real-time progress bar.
-4. **Instant PDF/Print Export**:
-   - Download or print academic reports with clean light-theme typography.
+Verify the complete system anytime with the automated 21-point test suite:
+```powershell
+Rscript scratch/test_suite.R
+```

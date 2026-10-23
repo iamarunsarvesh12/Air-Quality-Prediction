@@ -1,11 +1,15 @@
 # ===========================================================
-# AeroSense TN — data_fetcher.R (Module 1: Real-Time Data Layer)
-# Fetches live public air quality & weather data for Tamil Nadu districts
+# AeroSense TN — data_fetcher.R (Module 1: Real-Time Telemetry Layer)
+# Retrieves air-quality & meteorological telemetry for Tamil Nadu districts
+# Handles API timeouts, rate limits, station baselines, and data transparency
 # ===========================================================
 
-library(jsonlite)
+suppressPackageStartupMessages({
+  library(jsonlite)
+  library(curl)
+})
 
-# Directory of all 38 Tamil Nadu Districts
+# Directory of all 38 Tamil Nadu Districts with accurate geographic coordinates and baseline telemetry
 TN_DISTRICTS_DATA <- list(
   list(id = "ariyalur", name = "Ariyalur", lat = 11.1401, lng = 79.0786, zone = "Central TN", base_pm25 = 31.0),
   list(id = "chengalpattu", name = "Chengalpattu", lat = 12.6841, lng = 79.9836, zone = "Northern TN", base_pm25 = 43.5),
@@ -47,16 +51,16 @@ TN_DISTRICTS_DATA <- list(
   list(id = "virudhunagar", name = "Virudhunagar", lat = 9.5872, lng = 77.9514, zone = "Southern TN", base_pm25 = 33.0)
 )
 
-# In-memory caching
+# In-memory caching with 5-minute TTL
 .data_cache <- list()
-CACHE_TTL_SECS <- 300 # 5 minutes cache
+CACHE_TTL_SECS <- 300
 
 get_all_districts <- function() {
   TN_DISTRICTS_DATA
 }
 
 get_district_by_id_or_name <- function(query) {
-  if (is.null(query) || query == "") return(NULL)
+  if (is.null(query) || length(query) == 0 || trimws(query) == "") return(NULL)
   q_clean <- tolower(trimws(query))
   
   for (d in TN_DISTRICTS_DATA) {
@@ -70,16 +74,20 @@ get_district_by_id_or_name <- function(query) {
   NULL
 }
 
-#' Fetch live air quality and weather data for a Tamil Nadu district
+#' Fetch live air quality and meteorological telemetry for a Tamil Nadu district
 #'
 #' @param district_identifier District ID or Name (e.g. "trichy" or "Trichy")
-#' @return Structured list containing pollutants, weather, and data transparency metadata
-fetch_district_air_quality <- function(district_identifier) {
+#' @param allow_fallback Whether to fallback to Trichy if district is not found
+#' @return Structured list containing pollutants, weather, and transparency metadata, or NULL if invalid
+fetch_district_air_quality <- function(district_identifier, allow_fallback = TRUE) {
   district <- get_district_by_id_or_name(district_identifier)
   
   if (is.null(district)) {
-    # Default fallback to Trichy if invalid
-    district <- TN_DISTRICTS_DATA[[29]] # Trichy
+    if (!allow_fallback) {
+      return(NULL)
+    }
+    # Default fallback to Trichy
+    district <- TN_DISTRICTS_DATA[[29]]
   }
   
   cache_key <- district$id
@@ -99,8 +107,9 @@ fetch_district_air_quality <- function(district_identifier) {
   weather_url <- sprintf("https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&current=temperature_2m,relative_humidity_2m,wind_speed_10m", lat, lng)
   
   is_live <- FALSE
-  source_name <- "Open-Meteo Air Quality & CPCB Monitoring Network"
+  source_name <- "Open-Meteo Air Quality & Regional Monitoring Baseline"
   
+  # Default realistic district baseline values
   pm25 <- district$base_pm25
   pm10 <- round(pm25 * 1.6, 1)
   no2 <- 22.0
@@ -112,34 +121,40 @@ fetch_district_air_quality <- function(district_identifier) {
   humidity <- 60.0
   wind_speed <- 12.0
   
+  # Fast HTTP fetch using curl with 2-second timeout
   tryCatch({
-    con_aq <- url(aq_url, open = "r", timeout = 3)
-    json_aq <- jsonlite::fromJSON(con_aq)
-    close(con_aq)
+    h <- curl::new_handle(timeout = 2)
     
-    con_w <- url(weather_url, open = "r", timeout = 3)
-    json_w <- jsonlite::fromJSON(con_w)
-    close(con_w)
+    resp_aq <- curl::curl_fetch_memory(aq_url, handle = h)
+    if (resp_aq$status_code == 200) {
+      json_aq <- jsonlite::fromJSON(rawToChar(resp_aq$content))
+      cur_aq <- json_aq$current
+      
+      if (!is.null(cur_aq$pm2_5) && !is.na(cur_aq$pm2_5)) pm25 <- round(as.numeric(cur_aq$pm2_5), 1)
+      if (!is.null(cur_aq$pm10) && !is.na(cur_aq$pm10)) pm10 <- round(as.numeric(cur_aq$pm10), 1)
+      if (!is.null(cur_aq$nitrogen_dioxide) && !is.na(cur_aq$nitrogen_dioxide)) no2 <- round(as.numeric(cur_aq$nitrogen_dioxide) * 0.53, 1)
+      if (!is.null(cur_aq$sulphur_dioxide) && !is.na(cur_aq$sulphur_dioxide)) so2 <- round(as.numeric(cur_aq$sulphur_dioxide) * 0.38, 1)
+      if (!is.null(cur_aq$carbon_monoxide) && !is.na(cur_aq$carbon_monoxide)) co <- round(as.numeric(cur_aq$carbon_monoxide) / 1145, 2)
+      if (!is.null(cur_aq$ozone) && !is.na(cur_aq$ozone)) o3 <- round(as.numeric(cur_aq$ozone) * 0.51, 1)
+      if (!is.null(cur_aq$ammonia) && !is.na(cur_aq$ammonia)) nh3 <- round(as.numeric(cur_aq$ammonia) * 0.70, 1)
+      
+      is_live <- TRUE
+      source_name <- "Open-Meteo Air Quality Telemetry Network"
+    }
     
-    cur_aq <- json_aq$current
-    cur_w <- json_w$current
-    
-    if (!is.null(cur_aq$pm2_5)) pm25 <- round(as.numeric(cur_aq$pm2_5), 1)
-    if (!is.null(cur_aq$pm10)) pm10 <- round(as.numeric(cur_aq$pm10), 1)
-    if (!is.null(cur_aq$nitrogen_dioxide)) no2 <- round(as.numeric(cur_aq$nitrogen_dioxide) * 0.53, 1)
-    if (!is.null(cur_aq$sulphur_dioxide)) so2 <- round(as.numeric(cur_aq$sulphur_dioxide) * 0.38, 1)
-    if (!is.null(cur_aq$carbon_monoxide)) co <- round(as.numeric(cur_aq$carbon_monoxide) / 1145, 2)
-    if (!is.null(cur_aq$ozone)) o3 <- round(as.numeric(cur_aq$ozone) * 0.51, 1)
-    if (!is.null(cur_aq$ammonia)) nh3 <- round(as.numeric(cur_aq$ammonia) * 0.70, 1)
-    
-    if (!is.null(cur_w$temperature_2m)) temperature <- round(as.numeric(cur_w$temperature_2m), 1)
-    if (!is.null(cur_w$relative_humidity_2m)) humidity <- round(as.numeric(cur_w$relative_humidity_2m), 1)
-    if (!is.null(cur_w$wind_speed_10m)) wind_speed <- round(as.numeric(cur_w$wind_speed_10m), 1)
-    
-    is_live <- TRUE
+    resp_w <- curl::curl_fetch_memory(weather_url, handle = h)
+    if (resp_w$status_code == 200) {
+      json_w <- jsonlite::fromJSON(rawToChar(resp_w$content))
+      cur_w <- json_w$current
+      
+      if (!is.null(cur_w$temperature_2m) && !is.na(cur_w$temperature_2m)) temperature <- round(as.numeric(cur_w$temperature_2m), 1)
+      if (!is.null(cur_w$relative_humidity_2m) && !is.na(cur_w$relative_humidity_2m)) humidity <- round(as.numeric(cur_w$relative_humidity_2m), 1)
+      if (!is.null(cur_w$wind_speed_10m) && !is.na(cur_w$wind_speed_10m)) wind_speed <- round(as.numeric(cur_w$wind_speed_10m), 1)
+    }
   }, error = function(e) {
-    # Fallback to local realistic station baseline
-    is_live <- FALSE
+    # Network unavailable or timed out; falls back to verified station baseline
+    is_live <<- FALSE
+    source_name <<- "District Geographic Baseline Generator (Station Telemetry Stale or Offline)"
   })
   
   data_type <- if (is_live) "Live Station Feed" else "Estimated Station Baseline"

@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+"""
+AeroSense TN — Full System Automated Verification Test Suite
+Tests R Plumber API endpoints, input validation, 38 Tamil Nadu districts,
+CORS headers, health-risk mapping, and frontend static assets.
+"""
+
 import urllib.request
 import urllib.error
 import json
@@ -22,10 +29,12 @@ def log_test(name, status, detail=""):
     else:
         results["failed"] += 1
         print(f"[FAIL] {name}")
-        print(f"       -> {detail}")
+        if detail:
+            print(f"       -> {detail}")
 
 print("=================================================================")
 print("   AeroSense TN - Full System Automated Verification Suite")
+print("   Testing R-First Backend & Frontend Integration")
 print("=================================================================")
 
 # 1. Backend Health Check
@@ -33,8 +42,10 @@ try:
     req = urllib.request.Request(f"{API_BASE}/health")
     with urllib.request.urlopen(req, timeout=5) as resp:
         data = json.loads(resp.read().decode('utf-8'))
+        cors = resp.headers.get("Access-Control-Allow-Origin")
         if resp.status == 200 and data.get("status") == "ok":
-            log_test("Backend API Health Check (/api/health)", "PASSED", f"Service: {data.get('service')}, Model: {data.get('model')}")
+            log_test("Backend API Health Check (/api/health)", "PASSED",
+                     f"Service: {data.get('service')}, Model: {data.get('model')}, R²: {data.get('r_squared')}, CORS: {cors}")
         else:
             log_test("Backend API Health Check (/api/health)", "FAILED", f"Unexpected response: {data}")
 except Exception as e:
@@ -46,14 +57,33 @@ try:
     with urllib.request.urlopen(req, timeout=5) as resp:
         data = json.loads(resp.read().decode('utf-8'))
         count = data.get("count", 0)
-        if resp.status == 200 and count == 38:
-            log_test("Tamil Nadu 38-District Directory (/api/districts)", "PASSED", f"Count: {count} districts verified")
+        districts = data.get("districts", [])
+        if resp.status == 200 and count == 38 and len(districts) == 38:
+            first_name = districts[0].get("name")
+            last_name = districts[-1].get("name")
+            log_test("Tamil Nadu 38-District Directory (/api/districts)", "PASSED",
+                     f"All 38 districts present (e.g. {first_name} to {last_name})")
         else:
             log_test("Tamil Nadu 38-District Directory (/api/districts)", "FAILED", f"Expected 38, got {count}")
 except Exception as e:
     log_test("Tamil Nadu 38-District Directory (/api/districts)", "FAILED", str(e))
 
-# 3. Live District Prediction & Telemetry (Trichy)
+# 3. Live Regional Hubs Summary (/api/live-data)
+try:
+    req = urllib.request.Request(f"{API_BASE}/live-data")
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        data = json.loads(resp.read().decode('utf-8'))
+        hubs = data.get("hubs", [])
+        if resp.status == 200 and data.get("status") == "success" and len(hubs) > 0:
+            hub_names = [h.get("district_name") for h in hubs]
+            log_test("Live Regional Hubs Summary (/api/live-data)", "PASSED",
+                     f"Active hubs: {len(hubs)} ({', '.join(hub_names[:4])}...)")
+        else:
+            log_test("Live Regional Hubs Summary (/api/live-data)", "FAILED", str(data))
+except Exception as e:
+    log_test("Live Regional Hubs Summary (/api/live-data)", "FAILED", str(e))
+
+# 4. District-Specific Telemetry & Prediction (Trichy)
 try:
     req = urllib.request.Request(f"{API_BASE}/air-quality/trichy")
     with urllib.request.urlopen(req, timeout=5) as resp:
@@ -62,14 +92,16 @@ try:
         category = data.get("health_analysis", {}).get("category")
         diseases = data.get("health_analysis", {}).get("disease_risks", [])
         stages = data.get("preprocessing", {}).get("pipeline_stages", [])
-        if resp.status == 200 and aqi is not None and len(diseases) > 0:
-            log_test("Live Telemetry & Prediction for Trichy (/api/air-quality/trichy)", "PASSED", f"AQI: {aqi} ({category}), Pipeline Stages: {len(stages)}, Diseases Mapped: {len(diseases)}")
+        is_live = data.get("transparency", {}).get("is_live")
+        if resp.status == 200 and aqi is not None and len(diseases) == 5:
+            log_test("Live Telemetry & Prediction for Trichy (/api/air-quality/trichy)", "PASSED",
+                     f"AQI: {aqi} ({category}), Live Feed: {is_live}, Diseases: {len(diseases)}, Stages: {len(stages)}")
         else:
             log_test("Live Telemetry & Prediction for Trichy (/api/air-quality/trichy)", "FAILED", str(data))
 except Exception as e:
     log_test("Live Telemetry & Prediction for Trichy (/api/air-quality/trichy)", "FAILED", str(e))
 
-# 4. Live District Prediction & Telemetry (Chennai)
+# 5. District-Specific Telemetry (Chennai)
 try:
     req = urllib.request.Request(f"{API_BASE}/air-quality/chennai")
     with urllib.request.urlopen(req, timeout=5) as resp:
@@ -83,53 +115,136 @@ try:
 except Exception as e:
     log_test("Live Telemetry & Prediction for Chennai (/api/air-quality/chennai)", "FAILED", str(e))
 
-# 5. 24-Hour Forecast Endpoint (/api/prediction/coimbatore)
+# 6. District Identifier Strict Validation (Negative Test: Unknown District)
+try:
+    req = urllib.request.Request(f"{API_BASE}/air-quality/nonexistent-district-12345")
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            log_test("District Validation (Invalid District Rejection)", "FAILED", "Expected 404 error but got 200")
+    except urllib.error.HTTPError as he:
+        if he.code == 404:
+            log_test("District Validation (Invalid District Rejection)", "PASSED", f"Correctly returned HTTP 404 for unknown district")
+        else:
+            log_test("District Validation (Invalid District Rejection)", "FAILED", f"Expected HTTP 404, got {he.code}")
+except Exception as e:
+    log_test("District Validation (Invalid District Rejection)", "FAILED", str(e))
+
+# 7. 24-Hour Forecast Endpoint (/api/prediction/coimbatore)
 try:
     req = urllib.request.Request(f"{API_BASE}/prediction/coimbatore")
     with urllib.request.urlopen(req, timeout=5) as resp:
         data = json.loads(resp.read().decode('utf-8'))
         forecast = data.get("forecast_24h", [])
         if resp.status == 200 and len(forecast) > 0:
-            log_test("24-Hour Predictive Trajectory (/api/prediction/coimbatore)", "PASSED", f"Forecast Intervals: {len(forecast)} steps generated")
+            log_test("24-Hour Predictive Trajectory (/api/prediction/coimbatore)", "PASSED", f"{len(forecast)} hourly intervals generated")
         else:
             log_test("24-Hour Predictive Trajectory (/api/prediction/coimbatore)", "FAILED", str(data))
 except Exception as e:
     log_test("24-Hour Predictive Trajectory (/api/prediction/coimbatore)", "FAILED", str(e))
 
-# 6. Manual Custom Sensor Prediction (/api/manual-prediction)
+# 8. Valid Manual Custom Sensor Prediction (/api/manual-prediction)
 try:
     payload = {
         "district": "Custom Lab Station",
         "pm25": 45.0, "pm10": 78.0, "no2": 24.0, "so2": 6.5, "co": 0.85, "o3": 30.0,
         "temperature": 29.0, "humidity": 55.0, "windSpeed": 12.0, "persona": "sensitive"
     }
-    req = urllib.request.Request(f"{API_BASE}/manual-prediction", data=json.dumps(payload).encode('utf-8'), headers={"Content-Type": "application/json"})
+    req = urllib.request.Request(
+        f"{API_BASE}/manual-prediction",
+        data=json.dumps(payload).encode('utf-8'),
+        headers={"Content-Type": "application/json"}
+    )
     with urllib.request.urlopen(req, timeout=5) as resp:
         data = json.loads(resp.read().decode('utf-8'))
         aqi = data.get("prediction", {}).get("predicted_aqi")
         category = data.get("health_analysis", {}).get("category")
         primary = data.get("prediction", {}).get("primary_pollutant")
-        if resp.status == 200 and aqi is not None and category is not None:
-            log_test("Manual Prediction Engine (/api/manual-prediction)", "PASSED", f"Predicted AQI: {aqi} ({category}), Dominant Pollutant: {primary}")
+        diseases = data.get("health_analysis", {}).get("disease_risks", [])
+        if resp.status == 200 and aqi is not None and category is not None and len(diseases) == 5:
+            log_test("Valid Manual Prediction Engine (/api/manual-prediction)", "PASSED",
+                     f"Predicted AQI: {aqi} ({category}), Dominant Pollutant: {primary}, Diseases: {len(diseases)}")
         else:
-            log_test("Manual Prediction Engine (/api/manual-prediction)", "FAILED", str(data))
+            log_test("Valid Manual Prediction Engine (/api/manual-prediction)", "FAILED", str(data))
 except Exception as e:
-    log_test("Manual Prediction Engine (/api/manual-prediction)", "FAILED", str(e))
+    log_test("Valid Manual Prediction Engine (/api/manual-prediction)", "FAILED", str(e))
 
-# 7. Data Status & Pipeline Overview (/api/data-status)
+# 9. Manual Prediction Validation - Missing Field Rejection
+try:
+    bad_payload = {"district": "Lab", "pm10": 50.0} # missing pm25, no2, etc.
+    req = urllib.request.Request(
+        f"{API_BASE}/manual-prediction",
+        data=json.dumps(bad_payload).encode('utf-8'),
+        headers={"Content-Type": "application/json"}
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            log_test("Manual Prediction Validation (Missing Fields)", "FAILED", "Expected HTTP 400 rejection")
+    except urllib.error.HTTPError as he:
+        if he.code == 400:
+            log_test("Manual Prediction Validation (Missing Fields)", "PASSED", "Correctly rejected with HTTP 400")
+        else:
+            log_test("Manual Prediction Validation (Missing Fields)", "FAILED", f"Expected HTTP 400, got {he.code}")
+except Exception as e:
+    log_test("Manual Prediction Validation (Missing Fields)", "FAILED", str(e))
+
+# 10. Manual Prediction Validation - Non-Numeric Input Rejection
+try:
+    bad_payload = {
+        "district": "Lab", "pm25": "INVALID_TEXT", "pm10": 78.0, "no2": 24.0, "so2": 6.5, "co": 0.85, "o3": 30.0
+    }
+    req = urllib.request.Request(
+        f"{API_BASE}/manual-prediction",
+        data=json.dumps(bad_payload).encode('utf-8'),
+        headers={"Content-Type": "application/json"}
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            log_test("Manual Prediction Validation (Non-Numeric Input)", "FAILED", "Expected HTTP 400 rejection")
+    except urllib.error.HTTPError as he:
+        if he.code == 400:
+            log_test("Manual Prediction Validation (Non-Numeric Input)", "PASSED", "Correctly rejected non-numeric string with HTTP 400")
+        else:
+            log_test("Manual Prediction Validation (Non-Numeric Input)", "FAILED", f"Expected HTTP 400, got {he.code}")
+except Exception as e:
+    log_test("Manual Prediction Validation (Non-Numeric Input)", "FAILED", str(e))
+
+# 11. Manual Prediction Validation - Out-of-Range Value Rejection
+try:
+    bad_payload = {
+        "district": "Lab", "pm25": 999999.0, "pm10": 78.0, "no2": 24.0, "so2": 6.5, "co": 0.85, "o3": 30.0
+    }
+    req = urllib.request.Request(
+        f"{API_BASE}/manual-prediction",
+        data=json.dumps(bad_payload).encode('utf-8'),
+        headers={"Content-Type": "application/json"}
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            log_test("Manual Prediction Validation (Out-of-Range Input)", "FAILED", "Expected HTTP 400 rejection")
+    except urllib.error.HTTPError as he:
+        if he.code == 400:
+            log_test("Manual Prediction Validation (Out-of-Range Input)", "PASSED", "Correctly rejected 999999.0 out-of-range PM2.5 with HTTP 400")
+        else:
+            log_test("Manual Prediction Validation (Out-of-Range Input)", "FAILED", f"Expected HTTP 400, got {he.code}")
+except Exception as e:
+    log_test("Manual Prediction Validation (Out-of-Range Input)", "FAILED", str(e))
+
+# 12. Pipeline Data Status (/api/data-status)
 try:
     req = urllib.request.Request(f"{API_BASE}/data-status")
     with urllib.request.urlopen(req, timeout=5) as resp:
         data = json.loads(resp.read().decode('utf-8'))
         status = data.get("status")
-        if resp.status == 200 and status == "operational":
-            log_test("Data Preprocessing & Pipeline Status (/api/data-status)", "PASSED", f"Pipeline Status: {status}")
+        pipeline = data.get("pipeline", {})
+        if resp.status == 200 and status == "operational" and pipeline.get("random_forest_model"):
+            log_test("Data Preprocessing & Pipeline Status (/api/data-status)", "PASSED",
+                     f"Pipeline: {status}, Model: {pipeline.get('random_forest_model')}")
         else:
             log_test("Data Preprocessing & Pipeline Status (/api/data-status)", "FAILED", str(data))
 except Exception as e:
     log_test("Data Preprocessing & Pipeline Status (/api/data-status)", "FAILED", str(e))
 
-# 8. Frontend Static File Server Verification
+# 13. Frontend Static Assets Availability (Non-Python httpuv Server)
 pages = [
     "index.html",
     "live-dashboard.html",
@@ -146,7 +261,7 @@ for page in pages:
         req = urllib.request.Request(f"{FRONTEND_BASE}/{page}")
         with urllib.request.urlopen(req, timeout=5) as resp:
             if resp.status == 200:
-                log_test(f"Frontend Static Server ({page})", "PASSED", f"Size: {len(resp.read())} bytes")
+                log_test(f"Frontend Static Server ({page})", "PASSED", f"Status: 200 OK ({len(resp.read())} bytes)")
             else:
                 log_test(f"Frontend Static Server ({page})", "FAILED", f"Status: {resp.status}")
     except Exception as e:
