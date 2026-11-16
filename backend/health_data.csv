@@ -1,7 +1,7 @@
 category,effect,recommendation
-Good,No significant health risk.,Enjoy normal outdoor activities.
-Moderate,Mild irritation possible for unusually sensitive individuals.,Sensitive individuals should reduce prolonged outdoor exertion.
-Unhealthy for Sensitive Groups,Increased respiratory symptoms in children and people with asthma.,Limit prolonged outdoor exertion; keep quick-relief medication on hand.
-Unhealthy,Increased respiratory effects in the general population.,Reduce outdoor exertion and consider wearing a mask outdoors.
-Very Unhealthy,Significant aggravation of heart or lung disease.,Avoid outdoor exertion; keep windows closed and use an air purifier.
-Hazardous,Serious risk of respiratory effects for the entire population.,Remain indoors and avoid all outdoor exertion.
+Good,Minimal health impact.,Enjoy normal outdoor activities. Safe for all groups.
+Satisfactory,Minor breathing discomfort to sensitive people.,Generally suitable for outdoors; sensitive individuals monitor mild symptoms.
+Moderately Polluted,Breathing discomfort to people with asthma and heart disease.,Sensitive groups reduce prolonged outdoor exertion.
+Poor,Breathing discomfort to most people on prolonged exposure.,Wear protective N95 masks outdoors; avoid strenuous outdoor workouts.
+Very Poor,Respiratory illness likely on prolonged exposure; severe impact on vulnerable groups.,Stay indoors with air filtration; keep windows closed.
+Severe,High risk of severe physiological distress for entire population.,Avoid all outdoor physical activity; emergency precautions advised.

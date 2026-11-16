@@ -1,178 +1,131 @@
 # ===========================================================
 # AeroSense TN — health_risk_engine.R (Module 5: Health & Disease Risk Engine)
-# Authoritative AQI Categorization, Disease Mapping & Safety Guidance
+# Authoritative Indian CPCB AQI Categorization, Disease Risk Intelligence & Safety Guidance
 # ===========================================================
 
-HEALTH_DISCLAIMER <- "This health risk analysis provides general environmental risk intelligence based on public air quality indices and is not a medical diagnosis. Individuals with preexisting medical conditions should consult a qualified healthcare professional for clinical advice."
+HEALTH_DISCLAIMER <- "This environmental health assessment provides epidemiological and environmental risk intelligence based on the Indian National Air Quality Index (NAQI/CPCB) and atmospheric pollutant concentrations. It does not constitute a personal medical diagnosis or clinical prognosis. Individuals with preexisting respiratory, cardiovascular, or other medical conditions should consult a licensed healthcare professional for clinical advice."
 
-#' Classify AQI into official category
-classify_aqi <- function(aqi_val) {
-  aqi <- as.numeric(aqi_val)
-  
-  if (aqi <= 50) {
-    list(
-      category = "Good",
-      color = "#10B981", # Emerald
-      bg_color = "#ECFDF5",
-      risk_level = "Low",
-      summary = "Air quality is satisfactory; air pollution poses little or no risk.",
-      general_advice = "Enjoy outdoor activities. Air quality is safe for all groups."
-    )
-  } else if (aqi <= 100) {
-    list(
-      category = "Satisfactory / Moderate",
-      color = "#0284C7", # Sky Blue
-      bg_color = "#F0F9FF",
-      risk_level = "Moderate",
-      summary = "Air quality is acceptable; minor discomfort for hypersensitive people.",
-      general_advice = "Generally suitable for outdoor activities; sensitive individuals should observe mild symptoms."
-    )
-  } else if (aqi <= 200) {
-    list(
-      category = "Moderately Polluted",
-      color = "#F59E0B", # Amber
-      bg_color = "#FFFBEB",
-      risk_level = "Moderate-High",
-      summary = "May cause breathing discomfort to sensitive people and asthma patients.",
-      general_advice = "Sensitive groups should reduce prolonged outdoor exertion."
-    )
-  } else if (aqi <= 300) {
-    list(
-      category = "Poor",
-      color = "#EF4444", # Red
-      bg_color = "#FEF2F2",
-      risk_level = "High",
-      summary = "Causes breathing discomfort to most people on prolonged outdoor exposure.",
-      general_advice = "Wear protective N95 masks outdoors; avoid strenuous cardio workouts outside."
-    )
-  } else if (aqi <= 400) {
-    list(
-      category = "Very Poor",
-      color = "#8B5CF6", # Purple
-      bg_color = "#F5F3FF",
-      risk_level = "Very High",
-      summary = "Respiratory illness likely on prolonged exposure; severe impact on vulnerable groups.",
-      general_advice = "Stay indoors with HEPA air filtration; keep windows and doors securely closed."
-    )
-  } else {
-    list(
-      category = "Severe / Hazardous",
-      color = "#881337", # Maroon / Deep Crimson
-      bg_color = "#FFF1F2",
-      risk_level = "Critical / Severe",
-      summary = "Emergency health warnings; high risk of severe physiological distress for entire population.",
-      general_advice = "Avoid all outdoor physical activity; emergency precautions advised."
-    )
+# Path resolution for aqi_calculator
+get_health_script_dir <- function() {
+  candidates <- c("backend", ".", file.path(getwd(), "backend"), "..")
+  for (c in candidates) {
+    if (file.exists(file.path(c, "aqi_calculator.R"))) return(c)
   }
+  "."
+}
+h_dir <- get_health_script_dir()
+source(file.path(h_dir, "aqi_calculator.R"), local = TRUE)
+
+#' Classify AQI into official Indian NAQI category
+classify_aqi <- function(aqi_val) {
+  classify_indian_aqi(aqi_val)
 }
 
-#' Generate disease risks and actionable health recommendations
+#' Generate disease risks and actionable health recommendations based on Indian AQI & Dominant Pollutant
 #'
 #' @param aqi_val Numeric AQI
-#' @param primary_pollutant String
-#' @param persona Target risk persona
+#' @param primary_pollutant String dominant pollutant
+#' @param persona Target risk persona ("general", "sensitive", "children_elderly", "athletes", "workers")
 #' @return Comprehensive list of disease risks, recommendations, and disclaimer
 analyze_health_risks <- function(aqi_val, primary_pollutant = "PM2.5", persona = "general") {
-  classification <- classify_aqi(aqi_val)
-  aqi <- as.numeric(aqi_val)
+  classification <- classify_indian_aqi(aqi_val)
+  aqi <- if (!is.null(aqi_val) && !is.na(aqi_val)) as.numeric(aqi_val) else 50
   
   diseases <- list()
   
-  # Disease 1: Asthma & Bronchial Hyperresponsiveness
+  # 1. Asthma & Bronchospasm Exacerbation
   asthma_risk <- if (aqi <= 50) "Low" else if (aqi <= 100) "Mild" else if (aqi <= 200) "Moderate" else if (aqi <= 300) "High" else "Severe"
   diseases <- append(diseases, list(list(
     name = "Asthma Exacerbation & Bronchospasm",
     risk_level = asthma_risk,
     trigger_pollutants = c("PM2.5", "NO₂", "O₃"),
-    symptoms = "Wheezing, shortness of breath, chest tightness, increased bronchodilator inhaler usage.",
-    mitigation = "Keep rescue inhaler readily accessible; avoid cold air inhalation during peak traffic hours."
+    symptoms = "Wheezing, chest tightness, coughing spasms, increased bronchodilator rescue inhaler requirements.",
+    mitigation = "Keep rescue inhaler readily accessible. Avoid cold air and outdoor exertion during peak traffic hours."
   )))
   
-  # Disease 2: Acute Bronchitis & Airway Inflammation
+  # 2. Acute Bronchitis & Airway Inflammation
   bronchitis_risk <- if (aqi <= 100) "Low" else if (aqi <= 200) "Moderate" else if (aqi <= 300) "High" else "Severe"
   diseases <- append(diseases, list(list(
-    name = "Acute Bronchitis & Upper Airway Inflammation",
+    name = "Acute Bronchitis & Airway Inflammation",
     risk_level = bronchitis_risk,
     trigger_pollutants = c("PM10", "SO₂", "NO₂"),
-    symptoms = "Persistent throat irritation, coughing with mucus, burning sensation in upper chest.",
-    mitigation = "Use warm steam inhalation; wear certified N95 particulate respirator mask outdoors."
+    symptoms = "Persistent throat tickling, mucus hypersecretion, retrosternal burning sensation on deep inhalation.",
+    mitigation = "Use warm humidification/steam inhalation; wear certified N95 respirator mask outdoors when AQI > 100."
   )))
   
-  # Disease 3: Cardiovascular Stress & Microvascular Constriction
-  cardio_risk <- if (aqi <= 150) "Low" else if (aqi <= 250) "Moderate" else if (aqi <= 350) "High" else "Critical"
+  # 3. Cardiovascular Strain & Endothelial Stress
+  cardio_risk <- if (aqi <= 100) "Low" else if (aqi <= 200) "Mild" else if (aqi <= 300) "Moderate" else if (aqi <= 400) "High" else "Critical"
   diseases <- append(diseases, list(list(
     name = "Cardiovascular Strain & Endothelial Stress",
     risk_level = cardio_risk,
     trigger_pollutants = c("PM2.5", "CO"),
-    symptoms = "Elevated resting blood pressure, heart palpitations, accelerated pulse rate, systemic oxidative stress.",
-    mitigation = "Avoid heavy outdoor resistance or endurance training; maintain optimal hydration."
+    symptoms = "Transient elevated blood pressure, autonomic heart rate elevation, systemic inflammatory markers.",
+    mitigation = "Avoid vigorous outdoor aerobic exertion; stay well hydrated and minimize exposure near heavy freight corridors."
   )))
   
-  # Disease 4: COPD Flare-Up
-  copd_risk <- if (aqi <= 120) "Low" else if (aqi <= 200) "Moderate" else if (aqi <= 300) "High" else "Critical"
+  # 4. COPD & Chronic Pulmonary Complications
+  copd_risk <- if (aqi <= 100) "Low" else if (aqi <= 200) "Moderate" else if (aqi <= 300) "High" else "Critical"
   diseases <- append(diseases, list(list(
-    name = "COPD & Chronic Pulmonary Complications",
+    name = "COPD Vulnerability & Exertional Dyspnea",
     risk_level = copd_risk,
     trigger_pollutants = c("PM2.5", "PM10", "O₃"),
-    symptoms = "Exertional dyspnea, fatigue, decreased oxygen saturation levels.",
-    mitigation = "Maintain indoor HEPA filtration; consult physician if peak flow drops by >15%."
+    symptoms = "Exercise intolerance, breathlessness with minor movement, reduced peripheral oxygen saturation.",
+    mitigation = "Maintain indoor HEPA filtration. Follow prescribed pulmonary action plan and monitor peak expiratory flow."
   )))
   
-  # Disease 5: Allergic Rhinitis & Ocular Irritation
+  # 5. Allergic Rhinitis & Ocular Irritation
   rhinitis_risk <- if (aqi <= 80) "Low" else if (aqi <= 180) "Moderate" else "High"
   diseases <- append(diseases, list(list(
     name = "Allergic Rhinitis & Conjunctival Irritation",
     risk_level = rhinitis_risk,
-    trigger_pollutants = c("PM10", "Ozone", "SO₂"),
-    symptoms = "Watery eyes, nasal congestion, frequent sneezing, itchy palate.",
-    mitigation = "Rinse eyes with sterile saline after outdoor exposure; keep car windows closed while commuting."
+    trigger_pollutants = c("PM10", "O₃", "SO₂"),
+    symptoms = "Lacrimation (watery eyes), conjunctival injection, nasal congestion, repetitive sneezing.",
+    mitigation = "Rinse eyes with isotonic saline solution after exposure; close vehicle vents and windows during transit."
   )))
   
   # Persona-specific tailored recommendations
   persona_advice <- switch(
     persona,
     "sensitive" = list(
-      title = "Sensitive / Asthma Patient Protocol",
-      action = "Carry prescribed rescue inhalers at all times. Keep indoor air purifiers running continuously on auto mode.",
-      outdoor_limit = if (aqi > 100) "Strictly limit outdoor activity to <15 mins" else "Normal outdoor routine allowed",
-      mask_recommendation = if (aqi > 100) "N95 / FFP2 respirator mask mandatory" else "Cloth mask optional"
+      title = "Sensitive / Asthma Patient Guidance",
+      action = if (aqi > 100) "Carry prescribed rescue inhalers at all times. Run indoor air purification continuously on auto mode." else "Normal routines permitted with standard preventative care.",
+      outdoor_limit = if (aqi > 200) "Stay indoors; avoid all outdoor exertion" else if (aqi > 100) "Limit outdoor activity to essential tasks only" else "Normal outdoor routine allowed",
+      mask_recommendation = if (aqi > 100) "Well-fitted N95 / FFP2 respirator mask mandatory outdoors" else "Mask optional"
     ),
     "children_elderly" = list(
-      title = "Children & Senior Citizen Protocol",
-      action = "Avoid outdoor playgrounds or morning walks during peak pollution hours. Maintain adequate indoor hydration.",
-      outdoor_limit = if (aqi > 100) "Limit outdoor exposure; stay in shaded/filtered indoor areas" else "Safe for outdoor playtime",
-      mask_recommendation = if (aqi > 150) "Well-fitted child/senior N95 mask" else "None required"
+      title = "Children & Senior Citizen Guidance",
+      action = if (aqi > 100) "Avoid morning walks and school outdoor sports during peak pollution windows. Maintain adequate indoor hydration." else "Safe for outdoor playtime and recreation.",
+      outdoor_limit = if (aqi > 200) "Strictly avoid outdoor playgrounds and morning walks" else if (aqi > 100) "Limit outdoor play; prefer indoor shaded areas" else "Safe for outdoor playtime",
+      mask_recommendation = if (aqi > 150) "Child/Senior sized particulate filter mask" else "None required"
     ),
     "athletes" = list(
-      title = "Outdoor Athlete & Runner Protocol",
-      action = "High ventilation rates during cardio increase deep lung particulate deposition. Shift training indoors.",
-      outdoor_limit = if (aqi > 120) "Shift intense workouts to indoor treadmill/gym" else "Outdoor exercise permitted",
-      mask_recommendation = if (aqi > 150) "Sports training mask or move indoors" else "None"
+      title = "Outdoor Athlete & Runner Guidance",
+      action = if (aqi > 100) "Elevated ventilation rate during cardio increases deep alveolar particulate deposition. Shift training indoors." else "Optimal conditions for endurance and interval training.",
+      outdoor_limit = if (aqi > 200) "Zero outdoor cardio; complete workouts in indoor gyms" else if (aqi > 100) "Shift intense cardio indoors; restrict outdoor training to light walks" else "Full outdoor endurance training permitted",
+      mask_recommendation = if (aqi > 150) "Sports training mask or relocate indoors" else "None"
     ),
     "workers" = list(
-      title = "Outdoor & Construction Staff Protocol",
-      action = "Take regular indoor breaks every 45 minutes in filtered rest areas. Wash face and eyes periodically.",
-      outdoor_limit = if (aqi > 200) "Mandatory rotation schedules with filtered resting zones" else "Standard shift hours",
-      mask_recommendation = if (aqi > 100) "Heavy-duty N95 / KN95 mask with exhalation valve" else "Dust mask recommended"
+      title = "Outdoor Worker & Commuter Guidance",
+      action = if (aqi > 100) "Provide hydration stations and scheduled rest breaks in filtered indoor rest areas." else "Standard occupational outdoor conditions.",
+      outdoor_limit = if (aqi > 200) "Take frequent indoor rest breaks; rotate shifts away from heavy traffic" else "Standard shift hours permitted",
+      mask_recommendation = if (aqi > 100) "Employer-provided N95 / FFP2 respirators recommended" else "Standard dust protection"
     ),
     # Default: General Public
     list(
-      title = "General Population Protocol",
-      action = "Ventilate indoor spaces during midday when air quality is optimal. Ensure vehicle cabin air recirculation is on.",
-      outdoor_limit = if (aqi > 200) "Avoid unnecessary prolonged outdoor exposure" else "Normal daily activities",
-      mask_recommendation = if (aqi > 200) "N95 / KN95 mask recommended in heavy traffic" else "No mask required"
+      title = "General Population Guidance",
+      action = if (aqi > 200) "Keep residential doors and windows closed. Use mechanical HEPA filtration if available." else if (aqi > 100) "Sensitive individuals should take rest breaks during prolonged outdoor exertion." else "Air quality is satisfactory. Enjoy regular outdoor activities.",
+      outdoor_limit = if (aqi > 300) "Avoid non-essential outdoor travel" else if (aqi > 200) "Reduce prolonged outdoor exertion" else "Standard outdoor routines permitted",
+      mask_recommendation = if (aqi > 200) "N95 mask recommended outdoors" else "None required"
     )
   )
   
   list(
-    aqi = aqi,
     category = classification$category,
     color = classification$color,
     bg_color = classification$bg_color,
     risk_level = classification$risk_level,
-    summary = classification$summary,
-    general_advice = classification$general_advice,
-    primary_pollutant = primary_pollutant,
+    summary = classification$description,
+    general_advice = sprintf("Primary driver: %s. %s", primary_pollutant, classification$description),
     disease_risks = diseases,
     persona_recommendation = persona_advice,
     disclaimer = HEALTH_DISCLAIMER

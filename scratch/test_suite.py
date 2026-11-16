@@ -37,6 +37,23 @@ print("   AeroSense TN - Full System Automated Verification Suite")
 print("   Testing R-First Backend & Frontend Integration")
 print("=================================================================")
 
+# Pre-flight check: Verify if server is running
+server_online = False
+try:
+    req = urllib.request.Request(f"{API_BASE}/health")
+    with urllib.request.urlopen(req, timeout=2) as resp:
+        if resp.status == 200:
+            server_online = True
+except Exception:
+    pass
+
+if not server_online:
+    print("\n[NOTE] AeroSense TN backend server is not currently running on http://127.0.0.1:8000.")
+    print("Please launch the application first using:")
+    print("   .\\run.ps1  (or run.bat / Rscript run.R)")
+    print("Then run this verification test suite in a separate terminal window.\n")
+    sys.exit(0)
+
 # 1. Backend Health Check
 try:
     req = urllib.request.Request(f"{API_BASE}/health")

@@ -1,6 +1,7 @@
 # ===========================================================
 # AeroSense TN — api_server.R (Plumber REST API Controller)
-# Exposes clean, validated REST API endpoints for Frontend consumption
+# Exposes clean, validated, scientifically sound REST API endpoints
+# for Frontend consumption, health intelligence, and manual predictions.
 # ===========================================================
 
 # Manage library paths
@@ -18,21 +19,23 @@ suppressPackageStartupMessages({
 
 # Load modular components with directory resolution
 get_script_dir <- function() {
-  candidates <- c("backend", ".", file.path(getwd(), "backend"))
+  candidates <- c("backend", ".", file.path(getwd(), "backend"), "..")
   for (c in candidates) {
     if (file.exists(file.path(c, "data_fetcher.R"))) return(c)
   }
   "."
 }
 s_dir <- get_script_dir()
+source(file.path(s_dir, "aqi_calculator.R"), local = TRUE)
+source(file.path(s_dir, "telemetry_store.R"), local = TRUE)
 source(file.path(s_dir, "data_fetcher.R"), local = TRUE)
 source(file.path(s_dir, "data_preprocessing.R"), local = TRUE)
 source(file.path(s_dir, "feature_engineering.R"), local = TRUE)
 source(file.path(s_dir, "prediction_model.R"), local = TRUE)
 source(file.path(s_dir, "health_risk_engine.R"), local = TRUE)
 
-#* @apiTitle AeroSense TN — Tamil Nadu Air Quality & Disease Predictor API
-#* @apiDescription R Plumber REST API providing real-time air quality telemetry, Random Forest AQI predictions, 24h forecasting, and disease risk intelligence across Tamil Nadu districts.
+#* @apiTitle AeroSense TN — Tamil Nadu Air Quality & Health Risk API
+#* @apiDescription R Plumber REST API providing real-time air quality telemetry, Random Forest AQI predictions, 24h forecasting, and health risk intelligence across Tamil Nadu districts.
 #* @apiVersion 2.0.0
 
 #* Enable Cross-Origin Resource Sharing (CORS)
@@ -54,8 +57,9 @@ function(req, res) {
 #* @serializer unboxedJSON
 #* @get /api/health
 function(res) {
-  res$setHeader("Access-Control-Allow-Origin", "*")
   meta <- get_model_metadata()
+  pipe_status <- get_telemetry_pipeline_status()
+  
   list(
     status = "ok",
     service = "AeroSense TN API Engine",
@@ -64,7 +68,9 @@ function(res) {
     model = "RandomForest (R randomForest 4.7)",
     r_squared = meta$r_squared,
     rmse = meta$rmse,
+    mae = meta$mae,
     districts_supported = length(get_all_districts()),
+    pipeline_state = pipe_status$status,
     timestamp = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z")
   )
 }
@@ -73,68 +79,70 @@ function(res) {
 #* @serializer unboxedJSON
 #* @get /api/districts
 function(res) {
-  res$setHeader("Access-Control-Allow-Origin", "*")
+  districts <- get_all_districts()
   list(
     status = "success",
-    count = length(get_all_districts()),
-    districts = get_all_districts()
+    count = length(districts),
+    districts = districts
   )
 }
 
-.hubs_cache <- NULL
-.hubs_cache_time <- Sys.time() - 9999
-
-#* Get Live Air Quality Summary for All Major Tamil Nadu Hubs
+#* Get Live Air Quality Summary for All 38 Tamil Nadu Districts
 #* @serializer unboxedJSON
 #* @get /api/live-data
 function(res) {
-  res$setHeader("Access-Control-Allow-Origin", "*")
+  # Ensure telemetry cache is refreshed
+  refresh_all_districts_telemetry(force = FALSE)
+  districts <- get_all_districts()
   now <- Sys.time()
   
-  if (!is.null(.hubs_cache) && difftime(now, .hubs_cache_time, units = "secs") < 180) {
-    return(list(
-      status = "success",
-      cached = TRUE,
-      timestamp = format(.hubs_cache_time, "%Y-%m-%dT%H:%M:%S%z"),
-      hubs = .hubs_cache
-    ))
-  }
-  
-  districts <- get_all_districts()
-  major_ids <- c("trichy", "chennai", "coimbatore", "madurai", "salem", "tirunelveli", "erode", "vellore")
-  
-  hub_data <- lapply(districts, function(d) {
-    if (d$id %in% major_ids) {
-      raw <- fetch_district_air_quality(d$id, allow_fallback = TRUE)
-      pre <- preprocess_air_quality_data(c(raw$pollutants, raw$weather))
-      feat <- engineer_features(pre$cleaned_data)
-      pred <- run_aqi_prediction(feat$model_df, raw$pollutants, raw$weather)
-      health <- analyze_health_risks(pred$predicted_aqi, pred$primary_pollutant)
-      
-      list(
-        district_id = d$id,
-        district_name = d$name,
-        zone = d$zone,
-        aqi = pred$predicted_aqi,
-        category = health$category,
-        color = health$color,
-        primary_pollutant = pred$primary_pollutant,
-        is_live = raw$transparency$is_live
-      )
+  # Process all 38 districts
+  all_data <- lapply(districts, function(d) {
+    raw <- fetch_district_air_quality(d$id)
+    if (is.null(raw)) return(NULL)
+    
+    # Feature engineering for RF prediction
+    raw_input <- c(raw$pollutants, raw$weather)
+    prep <- preprocess_air_quality_data(raw_input)
+    feat <- engineer_features(prep$cleaned_data)
+    pred <- run_aqi_prediction(feat$model_df, raw$pollutants, raw$weather)
+    health <- analyze_health_risks(pred$predicted_aqi, pred$primary_pollutant)
+    
+    # Established AQI: calculated CPCB AQI if available, else predicted AQI
+    effective_aqi <- if (!is.null(raw$cpcb_aqi$calculated_aqi) && !is.na(raw$cpcb_aqi$calculated_aqi)) {
+      round(raw$cpcb_aqi$calculated_aqi)
     } else {
-      NULL
+      round(pred$predicted_aqi)
     }
+    
+    list(
+      district_id = d$id,
+      district_name = d$name,
+      zone = d$zone,
+      coordinates = list(latitude = d$lat, longitude = d$lng),
+      aqi = effective_aqi,
+      calculated_aqi = raw$cpcb_aqi$calculated_aqi,
+      predicted_aqi = pred$predicted_aqi,
+      category = health$category,
+      color = health$color,
+      bg_color = health$bg_color,
+      risk_level = health$risk_level,
+      primary_pollutant = pred$primary_pollutant,
+      is_live = isTRUE(raw$transparency$is_live),
+      data_status = raw$transparency$data_status,
+      observation_timestamp = raw$transparency$observation_timestamp_ist
+    )
   })
   
-  # Remove nulls
-  hub_data <- hub_data[!sapply(hub_data, is.null)]
-  .hubs_cache <<- hub_data
-  .hubs_cache_time <<- now
+  all_data <- all_data[!sapply(all_data, is.null)]
+  pipe_status <- get_telemetry_pipeline_status()
   
   list(
     status = "success",
-    timestamp = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
-    hubs = hub_data
+    timestamp = format(now, "%Y-%m-%dT%H:%M:%S%z"),
+    telemetry_source = pipe_status$provider,
+    districts_count = length(all_data),
+    hubs = all_data  # Backward-compatible hubs array containing all districts
   )
 }
 
@@ -142,10 +150,8 @@ function(res) {
 #* @serializer unboxedJSON
 #* @get /api/air-quality/<district>
 function(district, persona = "general", res) {
-  res$setHeader("Access-Control-Allow-Origin", "*")
-  
-  # Validate district identifier strictly
-  raw_feed <- fetch_district_air_quality(district, allow_fallback = FALSE)
+  # Strict district validation
+  raw_feed <- fetch_district_air_quality(district)
   if (is.null(raw_feed)) {
     res$status <- 404
     return(list(
@@ -161,11 +167,19 @@ function(district, persona = "general", res) {
   # Feature Engineering
   feat_result <- engineer_features(prep_result$cleaned_data)
   
-  # Prediction Model
-  pred_result <- run_aqi_prediction(feat_result$model_df, raw_feed$pollutants, raw_feed$weather)
+  # Fetch 24-hour hourly forecast
+  hourly_fc <- fetch_district_hourly_forecast(raw_feed$district_id)
+  
+  # ML Prediction Model
+  pred_result <- run_aqi_prediction(feat_result$model_df, raw_feed$pollutants, raw_feed$weather, hourly_fc)
   
   # Health Risk Engine
-  health_result <- analyze_health_risks(pred_result$predicted_aqi, pred_result$primary_pollutant, persona)
+  effective_aqi <- if (!is.null(raw_feed$cpcb_aqi$calculated_aqi) && !is.na(raw_feed$cpcb_aqi$calculated_aqi)) {
+    raw_feed$cpcb_aqi$calculated_aqi
+  } else {
+    pred_result$predicted_aqi
+  }
+  health_result <- analyze_health_risks(effective_aqi, pred_result$primary_pollutant, persona)
   
   list(
     status = "success",
@@ -175,12 +189,15 @@ function(district, persona = "general", res) {
     coordinates = raw_feed$coordinates,
     pollutants = raw_feed$pollutants,
     weather = raw_feed$weather,
+    cpcb_aqi = raw_feed$cpcb_aqi,
     transparency = raw_feed$transparency,
     preprocessing = list(
       pipeline_stages = prep_result$pipeline_stages,
+      missing_fields = prep_result$missing_fields,
       issues_treated = prep_result$issues
     ),
     prediction = list(
+      calculated_aqi = raw_feed$cpcb_aqi$calculated_aqi,
       predicted_aqi = pred_result$predicted_aqi,
       primary_pollutant = pred_result$primary_pollutant,
       horizon = pred_result$prediction_horizon,
@@ -205,9 +222,7 @@ function(district, persona = "general", res) {
 #* @serializer unboxedJSON
 #* @get /api/prediction/<district>
 function(district, res) {
-  res$setHeader("Access-Control-Allow-Origin", "*")
-  
-  raw_feed <- fetch_district_air_quality(district, allow_fallback = FALSE)
+  raw_feed <- fetch_district_air_quality(district)
   if (is.null(raw_feed)) {
     res$status <- 404
     return(list(
@@ -216,16 +231,21 @@ function(district, res) {
     ))
   }
   
+  hourly_fc <- fetch_district_hourly_forecast(raw_feed$district_id)
   prep_result <- preprocess_air_quality_data(c(raw_feed$pollutants, raw_feed$weather))
   feat_result <- engineer_features(prep_result$cleaned_data)
-  pred_result <- run_aqi_prediction(feat_result$model_df, raw_feed$pollutants, raw_feed$weather)
+  pred_result <- run_aqi_prediction(feat_result$model_df, raw_feed$pollutants, raw_feed$weather, hourly_fc)
   
   list(
     status = "success",
+    district_id = raw_feed$district_id,
     district_name = raw_feed$district_name,
+    calculated_aqi = raw_feed$cpcb_aqi$calculated_aqi,
     predicted_aqi = pred_result$predicted_aqi,
     primary_pollutant = pred_result$primary_pollutant,
-    horizon = pred_result$prediction_horizon,
+    horizon = hourly_fc$forecast_horizon,
+    source = hourly_fc$forecast_source,
+    generated_at = hourly_fc$generated_at,
     model_metadata = pred_result$model_metadata,
     forecast_24h = pred_result$forecast_24h
   )
@@ -235,8 +255,6 @@ function(district, res) {
 #* @serializer unboxedJSON
 #* @post /api/manual-prediction
 function(req, res) {
-  res$setHeader("Access-Control-Allow-Origin", "*")
-  
   # Parse body
   body <- req$body
   if (is.character(body)) {
@@ -251,9 +269,9 @@ function(req, res) {
   }
   
   persona <- if (!is.null(body$persona) && body$persona != "") as.character(body$persona) else "general"
-  district_name <- if (!is.null(body$district) && body$district != "") as.character(body$district) else "Custom Station"
+  district_name <- if (!is.null(body$district) && body$district != "") as.character(body$district) else "Custom Lab Station"
   
-  # 1. Validation limits for manual inputs
+  # Physical validation bounds for manual inputs
   BOUNDS <- list(
     pm25        = list(min = 0, max = 1000, label = "PM2.5 (µg/m³)"),
     pm10        = list(min = 0, max = 1500, label = "PM10 (µg/m³)"),
@@ -304,11 +322,16 @@ function(req, res) {
   # Feature Engineering
   feat_result <- engineer_features(prep_result$cleaned_data)
   
-  # Prediction Model
-  pred_result <- run_aqi_prediction(feat_result$model_df, body, body)
+  # ML Prediction Model & Indian CPCB calculation
+  pred_result <- run_aqi_prediction(feat_result$model_df, body, body, hourly_forecast = NULL)
   
   # Health Analysis
-  health_result <- analyze_health_risks(pred_result$predicted_aqi, pred_result$primary_pollutant, persona)
+  effective_aqi <- if (!is.null(pred_result$calculated_aqi) && !is.na(pred_result$calculated_aqi)) {
+    pred_result$calculated_aqi
+  } else {
+    pred_result$predicted_aqi
+  }
+  health_result <- analyze_health_risks(effective_aqi, pred_result$primary_pollutant, persona)
   
   list(
     status = "success",
@@ -322,8 +345,11 @@ function(req, res) {
       issues_treated = prep_result$issues
     ),
     prediction = list(
+      calculated_aqi = pred_result$calculated_aqi,
       predicted_aqi = pred_result$predicted_aqi,
       primary_pollutant = pred_result$primary_pollutant,
+      cpcb_eligibility = pred_result$cpcb_eligibility,
+      sub_indices = pred_result$sub_indices,
       horizon = "Instantaneous Custom Prediction",
       model_metadata = pred_result$model_metadata,
       forecast_24h = pred_result$forecast_24h
@@ -342,21 +368,23 @@ function(req, res) {
   )
 }
 
-#* Get Preprocessing & System Data Status
+#* Get Preprocessing & Pipeline Data Status
 #* @serializer unboxedJSON
 #* @get /api/data-status
 function(res) {
-  res$setHeader("Access-Control-Allow-Origin", "*")
   meta <- get_model_metadata()
+  pipe_status <- get_telemetry_pipeline_status()
+  
   list(
-    status = "operational",
+    status = pipe_status$status,
     pipeline = list(
-      raw_ingestion = "Active",
+      raw_ingestion = "Active (Batch Telemetry Ingestion)",
+      cpcb_aqi_engine = "Active (Indian CPCB NAAQS 2014)",
       missing_value_imputation = "Active",
       outlier_normalization = "Active",
       feature_engineering = "Active",
       random_forest_model = "Loaded (R 4.7)",
-      health_risk_engine = "Active (Indian NAAQS)"
+      health_risk_engine = "Active (Indian CPCB Categories)"
     ),
     model_metrics = list(
       r_squared = meta$r_squared,
@@ -365,10 +393,11 @@ function(res) {
     ),
     active_districts = length(get_all_districts()),
     data_sources = list(
-      primary = "Open-Meteo Air Quality Telemetry",
-      secondary = "Central Pollution Control Board (CPCB) Station Network Baseline",
-      fallback = "District Geographic Baseline Generator"
+      primary = "Open-Meteo Air Quality Telemetry Network (CAMS Global)",
+      secondary = "AeroSense TN Persistent Telemetry Store",
+      weather = "Open-Meteo Atmospheric Weather API"
     ),
+    telemetry_pipeline = pipe_status,
     server_time = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z")
   )
 }

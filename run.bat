@@ -9,6 +9,16 @@ echo ============================================================
 :: 1. Verify Rscript is installed and accessible in PATH
 where Rscript >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
+    if exist "%USERPROFILE%\R\R-4.6.1\bin\Rscript.exe" (
+        set "PATH=%USERPROFILE%\R\R-4.6.1\bin;!PATH!"
+    ) else (
+        for /d %%D in ("%ProgramFiles%\R\R-*") do (
+            if exist "%%D\bin\Rscript.exe" set "PATH=%%D\bin;!PATH!"
+        )
+    )
+)
+where Rscript >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
     echo.
     echo [ERROR] 'Rscript' was not found in your system PATH.
     echo Please install R (version 4.0 or later) from https://cloud.r-project.org

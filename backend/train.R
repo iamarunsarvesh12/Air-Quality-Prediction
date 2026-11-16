@@ -1,7 +1,7 @@
 # ===========================================================
 # AeroSense TN — train.R (Module: ML Model Training & Evaluation)
 # Full Random Forest training pipeline on Tamil Nadu air quality telemetry
-# Evaluates metrics (R², RMSE, MAE) and persists model to model.rds
+# Evaluates metrics (R², RMSE, MAE), compares with baseline, and persists model
 # ===========================================================
 
 suppressPackageStartupMessages({
@@ -37,12 +37,11 @@ train_aqi_model <- function(data_path = "dataset/air_quality.csv", model_output 
   # 1. Resolve dataset path
   resolved_data_path <- resolve_path(data_path)
   if (!file.exists(resolved_data_path)) {
-    # Check alternate location
     alt_path <- resolve_path("backend/dataset/air_quality.csv")
     if (file.exists(alt_path)) {
       resolved_data_path <- alt_path
     } else {
-      stop(sprintf("Training dataset not found at '%s'. Please place air_quality.csv in dataset/.", data_path))
+      stop(sprintf("Training dataset not found at '%s'.", data_path))
     }
   }
   
@@ -93,7 +92,13 @@ train_aqi_model <- function(data_path = "dataset/air_quality.csv", model_output 
   
   cat(sprintf("[Split] Training set: %d observations (80%%) | Evaluation set: %d observations (20%%)\n", nrow(train_set), nrow(test_set)))
   
-  # 5. Model Training (Random Forest Regressor)
+  # 5. Baseline Model Comparison (Predicting Training Mean)
+  mean_baseline_pred <- mean(train_set[[TARGET_COLUMN]])
+  baseline_rmse <- sqrt(mean((test_set[[TARGET_COLUMN]] - mean_baseline_pred)^2))
+  baseline_mae <- mean(abs(test_set[[TARGET_COLUMN]] - mean_baseline_pred))
+  cat(sprintf("[Baseline] Mean Predictor Baseline -> RMSE: %.2f, MAE: %.2f\n", baseline_rmse, baseline_mae))
+  
+  # 6. Model Training (Random Forest Regressor)
   cat("[Train] Training Random Forest Regressor (ntree = 500, mtry = 3)...\n")
   rf_formula <- as.formula(paste(TARGET_COLUMN, "~", paste(FEATURE_COLUMNS, collapse = " + ")))
   
@@ -106,14 +111,14 @@ train_aqi_model <- function(data_path = "dataset/air_quality.csv", model_output 
     keep.forest = TRUE
   )
   
-  # 6. Evaluation on independent test set (no leakage)
+  # 7. Evaluation on independent test set (strictly no leakage)
   cat("[Evaluation] Evaluating predictions on unseen test dataset...\n")
   test_predictions <- predict(rf_model, newdata = test_set)
   actuals <- test_set[[TARGET_COLUMN]]
   
   rmse <- sqrt(mean((test_predictions - actuals)^2))
   mae  <- mean(abs(test_predictions - actuals))
-  r2   <- cor(test_predictions, actuals)^2
+  r2   <- 1 - (sum((actuals - test_predictions)^2) / sum((actuals - mean(actuals))^2))
   
   # Out-of-Bag (OOB) metrics from model
   oob_r2 <- tail(rf_model$rsq, 1)
@@ -123,13 +128,13 @@ train_aqi_model <- function(data_path = "dataset/air_quality.csv", model_output 
   cat("   Random Forest Evaluation Results (Independent Test Set)\n")
   cat("------------------------------------------------------------\n")
   cat(sprintf("  • Test R² (Coefficient of Determination) : %.4f (%.1f%% variance explained)\n", r2, r2 * 100))
-  cat(sprintf("  • Test RMSE (Root Mean Squared Error)    : %.2f AQI units\n", rmse))
-  cat(sprintf("  • Test MAE  (Mean Absolute Error)        : %.2f AQI units\n", mae))
+  cat(sprintf("  • Test RMSE (Root Mean Squared Error)    : %.2f AQI units (vs Baseline %.2f)\n", rmse, baseline_rmse))
+  cat(sprintf("  • Test MAE  (Mean Absolute Error)        : %.2f AQI units (vs Baseline %.2f)\n", mae, baseline_mae))
   cat(sprintf("  • Out-of-Bag (OOB) R²                    : %.4f\n", oob_r2))
-  cat(sprintf("  • Out-of-Bag (OOB) RMSE                  : %.2f\n", oob_rmse))
+  cat(sprintf("  • Out-of-Bag (OOB) RMSE                  : %.2f AQI units\n", oob_rmse))
   cat("------------------------------------------------------------\n\n")
   
-  # 7. Importance
+  # 8. Feature Importance
   cat("Feature Importance ranking (%IncMSE):\n")
   imp <- randomForest::importance(rf_model)
   if ("%IncMSE" %in% colnames(imp)) {
@@ -137,11 +142,9 @@ train_aqi_model <- function(data_path = "dataset/air_quality.csv", model_output 
     for (i in seq_len(nrow(imp_sorted))) {
       cat(sprintf("  %2d. %-15s : %6.2f\n", i, rownames(imp_sorted)[i], imp_sorted[i, "%IncMSE"]))
     }
-  } else {
-    print(imp)
   }
   
-  # 8. Save model and metadata
+  # 9. Save model and metadata
   dest_model_path <- if (dir.exists("backend")) file.path("backend", "model.rds") else "model.rds"
   dest_meta_path  <- if (dir.exists("backend")) file.path("backend", "model_metadata.json") else "model_metadata.json"
   
@@ -154,6 +157,8 @@ train_aqi_model <- function(data_path = "dataset/air_quality.csv", model_output 
     r_squared = round(r2, 4),
     rmse = round(rmse, 2),
     mae = round(mae, 2),
+    baseline_rmse = round(baseline_rmse, 2),
+    baseline_mae = round(baseline_mae, 2),
     oob_r2 = round(oob_r2, 4),
     oob_rmse = round(oob_rmse, 2),
     ntree = 500,

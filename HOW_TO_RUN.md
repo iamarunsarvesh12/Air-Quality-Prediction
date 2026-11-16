@@ -18,6 +18,7 @@ run.bat
 ```powershell
 .\run.ps1
 ```
+*(If PowerShell blocks script execution on your system, run: `powershell -ExecutionPolicy Bypass -File .\run.ps1`)*
 
 ### Option C: Using Direct Rscript
 ```powershell
@@ -32,9 +33,9 @@ npm start
 ---
 
 ## 🌐 URLs Once Running:
-- **Frontend Web Portal:** [http://localhost:5500](http://localhost:5500)
-  - **Live District Dashboard:** [http://localhost:5500/live-dashboard.html](http://localhost:5500/live-dashboard.html)
-  - **Manual Prediction Engine:** [http://localhost:5500/manual-prediction.html](http://localhost:5500/manual-prediction.html)
+- **Frontend Web Portal:** [http://127.0.0.1:5500](http://127.0.0.1:5500)
+  - **Live District Dashboard:** [http://127.0.0.1:5500/live-dashboard.html](http://127.0.0.1:5500/live-dashboard.html)
+  - **Manual Prediction Engine:** [http://127.0.0.1:5500/manual-prediction.html](http://127.0.0.1:5500/manual-prediction.html)
 - **R Plumber Backend REST API:** [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health)
 
 ---

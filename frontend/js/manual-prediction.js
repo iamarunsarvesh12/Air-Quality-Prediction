@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const payload = {
-      district: document.getElementById('districtSelect')?.value || 'Custom Station',
+      district: document.getElementById('districtSelect')?.value || 'Custom Lab Station',
       persona: document.getElementById('personaSelect')?.value || 'general',
       pm25: Number(document.getElementById('pm25').value),
       pm10: Number(document.getElementById('pm10').value),
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Processing in R Engine…';
+      submitBtn.textContent = 'Processing in R Random Forest Engine…';
     }
 
     try {
@@ -115,6 +115,10 @@ function renderManualResult(data) {
   const h = data.health_analysis;
   const p = data.prediction;
 
+  const calcAqiBadge = (p.calculated_aqi !== null && p.calculated_aqi !== undefined)
+    ? `<span style="font-size: 0.95rem; font-weight: 700; color: #0284C7; background: #E0F2FE; padding: 4px 10px; border-radius: 8px;">CPCB Calculated: ${p.calculated_aqi}</span>`
+    : '';
+
   container.innerHTML = `
     <div style="border-bottom: 2px solid #E2E8F0; padding-bottom: 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
       <div>
@@ -122,22 +126,23 @@ function renderManualResult(data) {
         <h2 style="font-size: 2rem; color: var(--text-primary); margin-top: 4px;">Predicted Air Quality Report</h2>
         <span style="font-size: 0.85rem; color: var(--text-muted);">Timestamp: ${data.timestamp_display}</span>
       </div>
-      <div style="text-align: right;">
+      <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
         <span style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">PRIMARY POLLUTANT</span>
         <span style="font-size: 1.4rem; font-weight: 800; color: #DC2626;">${p.primary_pollutant}</span>
+        ${calcAqiBadge}
       </div>
     </div>
 
     <!-- Hero AQI Metric -->
-    <div style="display: grid; grid-template-columns: 200px 1fr; gap: 24px; align-items: center; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; align-items: center; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
       <div style="text-align: center;">
         <div style="font-size: 3.8rem; font-weight: 800; line-height: 1; color: ${h.color};">${Math.round(p.predicted_aqi)}</div>
-        <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-top: 4px;">Predicted AQI Index</div>
+        <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-top: 4px;">Random Forest Predicted AQI</div>
       </div>
       <div>
         <span class="aqi-status-pill" style="background: ${h.bg_color}; color: ${h.color}; font-size: 1rem; margin-bottom: 8px;">${h.category}</span>
         <p style="color: var(--text-secondary); font-size: 1rem; line-height: 1.5;">${h.summary}</p>
-        <p style="color: #0369A1; font-weight: 600; font-size: 0.9rem; margin-top: 6px;">💡 Recommendation: ${h.general_advice}</p>
+        <p style="color: #0369A1; font-weight: 600; font-size: 0.9rem; margin-top: 6px;">💡 Guidance: ${h.general_advice}</p>
       </div>
     </div>
 

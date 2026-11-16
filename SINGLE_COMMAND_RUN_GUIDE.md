@@ -18,6 +18,7 @@ run.bat
 ```powershell
 .\run.ps1
 ```
+*(If PowerShell blocks script execution on your system, run: `powershell -ExecutionPolicy Bypass -File .\run.ps1`)*
 
 ### Option 3: Direct Rscript
 ```powershell

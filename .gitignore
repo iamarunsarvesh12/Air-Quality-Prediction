@@ -10,3 +10,15 @@ r_libs/
 .DS_Store
 Thumbs.db
 tmp/
+
+# Python cache artifacts
+__pycache__/
+*.pyc
+
+# Local unrelated files
+app.py
+data/
+static/
+templates/
+scratch/test_50_20_20_10.py
+scratch/verify_expense_tracker.py

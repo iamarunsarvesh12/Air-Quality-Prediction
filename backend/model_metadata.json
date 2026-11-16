@@ -1,16 +1,18 @@
 {
   "model_name": "AeroSense TN Random Forest AQI Regressor",
   "algorithm": "RandomForest (R randomForest 4.7)",
-  "r_squared": 0.9577,
-  "rmse": 14.52,
-  "mae": 10.03,
-  "oob_r2": 0.9604,
-  "oob_rmse": 15.02,
+  "r_squared": 0.9871,
+  "rmse": 8.87,
+  "mae": 5.25,
+  "baseline_rmse": 78.03,
+  "baseline_mae": 59.84,
+  "oob_r2": 0.9829,
+  "oob_rmse": 10.65,
   "ntree": 500,
   "mtry": 3,
-  "train_samples": 960,
-  "test_samples": 240,
+  "train_samples": 1200,
+  "test_samples": 300,
   "features": ["pm25", "pm10", "no2", "so2", "co", "o3", "temperature", "humidity", "windSpeed"],
   "target": "aqi",
-  "trained_at": "2026-10-22T16:19:28+0530"
+  "trained_at": "2026-10-23T15:59:47+0530"
 }

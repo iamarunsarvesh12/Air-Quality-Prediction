@@ -39,7 +39,10 @@
       <p style="color: var(--text-secondary); max-width: 800px;">
         Live public telemetry ingestion, automated preprocessing, Random Forest machine learning AQI prediction, 24-hour predictive trend analysis, and disease risk evaluation across all 38 Tamil Nadu districts.
       </p>
-      <div id="dashboardStatus" style="font-size: 0.85rem; font-weight: 600; color: #0284C7; margin-top: 6px;"></div>
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 8px;">
+        <div id="dashboardStatus" style="font-size: 0.85rem; font-weight: 600; color: #0284C7;"></div>
+        <button id="refreshTelemetryBtn" style="padding: 6px 14px; font-size: 0.82rem; font-weight: 600; background: #F1F5F9; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s ease;">🔄 Refresh Telemetry</button>
+      </div>
     </div>
 
     <!-- Main Dashboard Grid -->
@@ -47,6 +50,13 @@
 
       <!-- LEFT SIDEBAR: DISTRICT SELECTOR -->
       <aside class="district-sidebar">
+
+
+
+
+
+
+        
         <h3 style="font-size: 1.1rem; margin-bottom: 12px; color: var(--text-primary);">Tamil Nadu Districts (38)</h3>
         <div class="search-wrap">
           <input type="text" id="districtSearch" class="search-input" placeholder="🔍 Search district (Trichy, Chennai...)" />

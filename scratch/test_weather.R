@@ -1,0 +1,8 @@
+library(curl)
+library(jsonlite)
+h <- curl::new_handle(timeout = 10)
+resp <- curl::curl_fetch_memory("https://api.open-meteo.com/v1/forecast?latitude=13.0827&longitude=80.2707&current=temperature_2m,relative_humidity_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m&forecast_days=2", handle = h)
+cat("Weather status:", resp$status_code, "\n")
+json <- jsonlite::fromJSON(rawToChar(resp$content))
+print(json$current_units)
+print(json$current)

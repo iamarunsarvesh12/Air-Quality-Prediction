@@ -1,85 +1,86 @@
 # ===========================================================
-# AirSense — generate_dataset.R (Synthetic Data Generator)
-# Generates a realistic, large dataset for model training
-# to avoid NaN issues with tiny datasets during partitioning.
-# Covers the full scale of AQI values (0 to 500).
+# AeroSense TN — generate_dataset.R (Grounded Dataset Generator)
+# Generates a physically realistic dataset for Random Forest training
+# with target AQI strictly calculated using the Indian CPCB NAQI methodology.
 # ===========================================================
 
+source(file.path("backend", "aqi_calculator.R"))
+
 set.seed(42)
-n <- 1200 # slightly larger dataset for better training
+n <- 1500
 
-# Wind speed: higher wind disperses pollutants
-windSpeed <- runif(n, 1, 35)
+# 1. Environmental & meteorological variables
+windSpeed <- round(runif(n, 1.5, 38.0), 1)
+temperature <- round(runif(n, 12.0, 44.0), 1)
+humidity <- round(runif(n, 20.0, 95.0), 1)
 
-# Temperature: 5 to 45 °C
-temperature <- runif(n, 5, 45)
+# 2. Atmospheric dispersion factor (higher wind disperses pollutants)
+dispersion <- (18.0 / windSpeed)^0.35
 
-# Humidity: 10 to 100%
-humidity <- runif(n, 10, 100)
+# 3. Pollutant concentrations (µg/m³ for PM, NO2, SO2, O3; mg/m³ for CO)
+# PM2.5 (1 to 280 µg/m³)
+pm25 <- (rgamma(n, shape = 1.8, rate = 0.035)) * dispersion
+pm25 <- round(pmax(2.0, pmin(280.0, pm25)), 1)
 
-# Generate features to represent extremely clean to extremely hazardous days
-# Use exponent/mixture distributions to capture rare hazardous events and clean days.
-pm25 <- (rgamma(n, shape = 1.5, rate = 0.03)) * (18 / windSpeed)^0.4
-pm25 <- pmax(1.0, pmin(280.0, pm25))
+# PM10 (must be >= PM2.5, typically 1.3 to 2.2x PM2.5)
+pm10 <- pm25 * runif(n, 1.25, 2.1) + rnorm(n, 6, 2)
+pm10 <- round(pmax(pm25 * 1.05, pmin(450.0, pm10)), 1)
 
-# PM10
-pm10 <- pm25 * runif(n, 1.1, 1.8) + (windSpeed * 0.4) + rnorm(n, 5, 3)
-pm10 <- pmax(2.0, pmin(400.0, pm10))
+# NO2 (traffic / combustion, 3 to 220 µg/m³)
+no2 <- (rgamma(n, shape = 2.0, rate = 0.045)) * dispersion
+no2 <- round(pmax(3.0, pmin(220.0, no2)), 1)
 
-# NO2
-no2 <- (rgamma(n, shape = 2.0, rate = 0.05)) * (15 / windSpeed)^0.3
-no2 <- pmax(1.0, pmin(120.0, no2))
+# SO2 (industrial, 1 to 140 µg/m³)
+so2 <- (rgamma(n, shape = 1.4, rate = 0.08)) * dispersion
+so2 <- round(pmax(1.0, pmin(140.0, so2)), 1)
 
-# SO2
-so2 <- (rgamma(n, shape = 1.2, rate = 0.1)) * (10 / windSpeed)^0.3
-so2 <- pmax(0.2, pmin(80.0, so2))
+# CO (traffic, in mg/m³, 0.1 to 16.0 mg/m³)
+co <- (pm25 * 0.035 + no2 * 0.02) * runif(n, 0.7, 1.3)
+co <- round(pmax(0.1, pmin(16.0, co)), 2)
 
-# CO
-co <- (pm25 * 0.03 + no2 * 0.02) * runif(n, 0.7, 1.3)
-co <- pmax(0.05, pmin(15.0, co))
+# O3 (photochemical reaction driven by temperature and solar radiation, 5 to 240 µg/m³)
+o3 <- (temperature * 2.4) * (20.0 / windSpeed)^0.2 + rnorm(n, 8, 4)
+o3 <- round(pmax(5.0, pmin(240.0, o3)), 1)
 
-# O3: driven heavily by solar/temperature, peaks on hot stagnant days
-o3 <- (temperature * 2.8) * (20 / windSpeed)^0.2 + rnorm(n, 10, 5)
-o3 <- pmax(2.0, pmin(200.0, o3))
+# 4. Compute ground truth Indian CPCB AQI using authoritative engine
+aqi_vec <- numeric(n)
+for (i in 1:n) {
+  p_sample <- list(
+    pm25 = pm25[i],
+    pm10 = pm10[i],
+    no2  = no2[i],
+    so2  = so2[i],
+    co   = co[i],
+    o3   = o3[i]
+  )
+  calc <- calculate_indian_aqi(p_sample)
+  aqi_vec[i] <- if (!is.null(calc$calculated_aqi)) calc$calculated_aqi else 50
+}
 
-# Calculate AQI based on max EPA sub-indices style formula
-pm25_sub <- pm25 * 1.5
-pm10_sub <- pm10 * 0.8
-no2_sub <- no2 * 2.2
-so2_sub <- so2 * 4.2
-co_sub <- co * 30.0
-o3_sub <- o3 * 1.8
-
-aqi_raw <- pmax(pm25_sub, pm10_sub, no2_sub, so2_sub, co_sub, o3_sub)
-
-# Adjust for temperature & humidity (minor adjustments) + random normal noise
-aqi <- aqi_raw + (temperature - 20) * 0.4 + (humidity - 50) * 0.15 + rnorm(n, 0, 8)
-aqi <- pmax(5, pmin(495, aqi)) # Clamp to valid AQI scale [5, 495]
-aqi <- round(aqi)
-
-# Create the data frame in the exact required column order
 df <- data.frame(
-  pm25 = round(pm25, 1),
-  pm10 = round(pm10, 1),
-  no2 = round(no2, 1),
-  so2 = round(so2, 1),
-  co = round(co, 2),
-  o3 = round(o3, 1),
-  temperature = round(temperature, 1),
-  humidity = round(humidity),
-  windSpeed = round(windSpeed, 1),
-  aqi = aqi
+  pm25 = pm25,
+  pm10 = pm10,
+  no2 = no2,
+  so2 = so2,
+  co = co,
+  o3 = o3,
+  temperature = temperature,
+  humidity = humidity,
+  windSpeed = windSpeed,
+  aqi = aqi_vec
 )
 
 # Output dataset summary
-message(sprintf("Generated synthetic air quality dataset with %d records.", nrow(df)))
-message(sprintf("AQI range: %d to %d", min(df$aqi), max(df$aqi)))
-message("AQI categories counts:")
-categories <- cut(df$aqi, breaks = c(0, 50, 100, 150, 200, 300, 500),
-                  labels = c("Good", "Moderate", "Sensitive", "Unhealthy", "Very Unhealthy", "Hazardous"))
+cat(sprintf("Generated dataset with %d samples.\n", nrow(df)))
+cat(sprintf("AQI range: %d to %d\n", min(df$aqi), max(df$aqi)))
+cat("AQI categories counts (Indian CPCB):\n")
+categories <- cut(df$aqi, breaks = c(-1, 50, 100, 200, 300, 400, 600),
+                  labels = c("Good", "Satisfactory", "Moderately Polluted", "Poor", "Very Poor", "Severe"))
 print(table(categories))
 
-# Save to destination folder
-dir.create("dataset", showWarnings = FALSE)
-write.csv(df, "dataset/air_quality.csv", row.names = FALSE)
-message("Dataset saved successfully to 'dataset/air_quality.csv'")
+# Save to backend/dataset/air_quality.csv
+dest_dir <- file.path("backend", "dataset")
+dir.create(dest_dir, showWarnings = FALSE, recursive = TRUE)
+dest_file <- file.path(dest_dir, "air_quality.csv")
+write.csv(df, dest_file, row.names = FALSE)
+cat(sprintf("Dataset saved successfully to '%s'.\n", dest_file))
